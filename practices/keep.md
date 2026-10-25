@@ -31,8 +31,8 @@ The format changed (see change.md, item 5), but the setup is the same idea.
 was actually checked: unit, integration, client config or live host. It also says a blocked CI
 run is recorded as blocked, not passing. The repo keeps an `evidence/` folder for each alpha.
 
-**Why keep it:** an agent that says "tests pass" about a check it didn't run is the most
-common false claim in agent PRs.
+**Why keep it:** "tests pass" means little until it says which tests, and at what scope. An
+agent that reports a check it didn't run makes the whole PR body harder to trust.
 
 **In the template:** every PR body has a Validation section with `pass`, `fail`, `blocked` or
 `not_run` lines, and `pr-format.mjs` rejects a body without one.
