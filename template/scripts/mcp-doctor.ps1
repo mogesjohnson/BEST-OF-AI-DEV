@@ -10,6 +10,8 @@
   file locks and memory. This script lists processes whose command line matches -Pattern and
   calls one an orphan when its parent process is gone, or when the parent PID now belongs to
   a newer process (Windows reuses PIDs). Processes younger than -MinAgeMinutes are left alone.
+  Command lines matching -Exclude are never touched; the default skips this script and any
+  agent started with --mcp-* flags, which would otherwise look like a server.
 
   Dry run is the default. -Apply runs "taskkill /PID <pid> /T /F" on each orphan, which also
   stops the server's own children.
@@ -26,7 +28,9 @@
 param(
   [switch]$Apply,
   [int]$MinAgeMinutes = 10,
-  [string]$Pattern = '(?i)(modelcontextprotocol|mcp-server|server-mcp|mcp-remote|mcp[-_]proxy|[\\/ ]mcp[\\/ ]|-mcp(\.exe)?\b)',
+  [string]$Pattern = '(?i)(modelcontextprotocol|mcp-server|server-mcp|mcp-remote|mcp[-_]proxy|[\\/ ]mcp[\\/ ]|\w-mcp(\.exe)?\b)',
+  # Agents themselves take --mcp-* flags (claude --mcp-config). Never treat them as servers.
+  [string]$Exclude = '(?i)(mcp-doctor|--mcp-)',
   [string]$ProcessJson = ''
 )
 
@@ -72,7 +76,7 @@ $mcp = @()
 foreach ($p in $procs) {
   if (-not $p.CommandLine) { continue }          # other users' processes, unless elevated
   if ([int]$p.ProcessId -eq $self) { continue }
-  if ($p.CommandLine -match 'mcp-doctor') { continue }
+  if ($p.CommandLine -match $Exclude) { continue }
   if ($p.CommandLine -match $Pattern) { $mcp += $p }
 }
 

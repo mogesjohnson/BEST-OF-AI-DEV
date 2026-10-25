@@ -16,6 +16,10 @@
   main worktree. Removal uses "git worktree remove" without --force, so Git refuses
   anything it considers dirty, even if this script got it wrong.
 
+  "Merged" means the branch tip is an ancestor of -Base. A squash or rebase merge leaves no
+  ancestor, so those branches show up only once they pass -StaleDays. Run git fetch first
+  so origin/main is current.
+
   Dry run is the default. Nothing changes without -Apply.
   Exit 0 done, 1 a removal failed, 2 not in a git repo or bad arguments.
 
