@@ -2,12 +2,13 @@
 // BEST-OF-AI-DEV template v1. Secret and personal-path scan (RULES.md R12).
 //
 //   node scripts/check/secrets.mjs --staged   added lines in the index (pre-commit)
-//   node scripts/check/secrets.mjs --all      every tracked file (CI)
+//   node scripts/check/secrets.mjs --all      every tracked file as checked out (CI)
 //
 // Uses gitleaks when it is on PATH, and always runs the built-in patterns below,
 // because gitleaks does not know about personal paths. A line ending in a
 // "gitleaks:allow" comment is skipped by both. Exit 0 clean, 1 findings, 2 git error.
 import { execFileSync, spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -59,11 +60,11 @@ export function addedLines(diff) {
 const git = (args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
 
 function collect(mode) {
-  if (mode === '--staged') return addedLines(git(['diff', '--cached', '-U0', '--no-color', '--no-ext-diff', '--diff-filter=ACMR']));
+  if (mode === '--staged') return addedLines(git(['-c', 'core.quotePath=false', 'diff', '--cached', '-U0', '--no-color', '--no-ext-diff', '--diff-filter=ACMR']));
   const files = new Map();
   for (const file of git(['ls-files', '-z']).split('\0').filter(Boolean)) {
     let text;
-    try { text = git(['show', `:${file}`]); } catch { continue; }
+    try { text = readFileSync(file, 'utf8'); } catch { continue; } // deleted in the worktree
     if (text.includes('\0')) { files.set(file, []); continue; } // binary: check the name only
     files.set(file, text.split('\n').map((t, i) => [i + 1, t]));
   }
