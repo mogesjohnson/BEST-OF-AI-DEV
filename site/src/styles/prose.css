@@ -1,0 +1,148 @@
+/* Article text: headings, paragraphs, lists, code, tables. Rendered from docs/why Markdown. */
+
+.bd-page-header {
+  margin-bottom: 28px;
+}
+.bd-eyebrow {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--bd-accent);
+}
+.bd-h1 {
+  margin: 6px 0 14px;
+  font-size: clamp(28px, 4vw, 34px);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.bd-lede {
+  margin: 0;
+  font-size: 17px;
+  color: var(--bd-text-2);
+}
+.bd-h2,
+.bd-h3 {
+  position: relative;
+  scroll-margin-top: calc(var(--bd-head-h) + 24px);
+}
+.bd-h2 {
+  margin: 48px 0 14px;
+  font-size: 23px;
+  line-height: 1.3;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.bd-h3 {
+  margin: 32px 0 10px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.bd-anchor {
+  margin-left: 8px;
+  color: var(--bd-faint);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.bd-h2:hover .bd-anchor,
+.bd-h3:hover .bd-anchor,
+.bd-anchor:focus-visible {
+  opacity: 1;
+}
+.bd-prose p,
+.bd-prose li {
+  font-size: 15.5px;
+  line-height: 1.7;
+}
+.bd-prose p {
+  margin: 0 0 14px;
+}
+.bd-prose ul,
+.bd-prose ol {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+.bd-prose li + li {
+  margin-top: 4px;
+}
+.bd-root .bd-prose a {
+  color: var(--bd-accent);
+}
+.bd-root .bd-prose a:hover {
+  text-decoration: underline;
+}
+.bd-prose code {
+  font-family: var(--bd-mono);
+  font-size: 0.88em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--bd-surface-2);
+}
+.bd-prose pre {
+  margin: 16px 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  border: 1px solid var(--bd-edge);
+  border-radius: 14px;
+  background: var(--bd-surface);
+  font-family: var(--bd-mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.bd-prose pre code {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  font-size: inherit;
+}
+.bd-prose table {
+  display: block;
+  width: 100%;
+  margin: 18px 0;
+  overflow-x: auto;
+  border: 1px solid var(--bd-edge);
+  border-radius: 14px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+.bd-prose th,
+.bd-prose td {
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--bd-edge);
+}
+.bd-prose th {
+  font-weight: 600;
+  background: var(--bd-surface);
+}
+.bd-prose tr:last-child td {
+  border-bottom: 0;
+}
+/* A blockquote is a callout. Start it with **Note**, **Evidence** or **Caution**. */
+.bd-prose blockquote {
+  margin: 18px 0;
+  padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, var(--bd-info) 35%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bd-info) 8%, transparent);
+}
+.bd-prose blockquote p:last-child {
+  margin-bottom: 0;
+}
+.bd-edit {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bd-edge);
+  font-size: 13.5px;
+}
+.bd-edit a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--bd-muted);
+}
+.bd-edit a:hover {
+  color: var(--bd-text);
+}
