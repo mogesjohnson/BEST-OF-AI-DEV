@@ -121,6 +121,16 @@ test('known gaps stay written down', { skip: !existsSync(claudePath) }, () => {
   }
 });
 
+test('AGENTS.md stays at or under 70 lines', () => {
+  // This repo's root AGENTS.md sits one level above template/; a downstream repo has only one.
+  const parent = root.pathname.endsWith('/template/') ? [new URL('../AGENTS.md', root)] : [];
+  const files = [new URL('AGENTS.md', root), ...parent].filter((f) => existsSync(f));
+  for (const f of files) {
+    const lines = readFileSync(f, 'utf8').replace(/\n$/, '').split('\n').length;
+    assert.ok(lines <= 70, `${f.pathname.split('/').slice(-2).join('/')} has ${lines} lines`);
+  }
+});
+
 test('Codex config stays sandboxed', { skip: !existsSync(codexPath) }, () => {
   const toml = readFileSync(codexPath, 'utf8').replace(/#.*$/gm, '');
   assert.match(toml, /^sandbox_mode\s*=\s*"(workspace-write|read-only)"/m);
