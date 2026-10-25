@@ -21,9 +21,10 @@ An agent reads the output, sees what it expected, and moves on.
   or allow for each one. A rule edit that changes any outcome fails with the command's name.
 - **Named gaps.** Commands the rules are known to miss sit in their own "known gaps" test. If
   a gap closes, the test fails, and the docs get updated in the same PR.
-- **Test the file that runs.** `checker-change.test.mjs` pulls the shell out of
-  `.github/workflows/pr-checks.yml` and runs it in scratch repos. It doesn't test a copy, so
-  the workflow can't drift away from its test.
+- **Test the file that runs.** The PR gates' logic lives in `scripts/check/gate.mjs`, not in
+  workflow shell. `gate.test.mjs` runs that file in scratch repos, on Windows and Linux, and
+  checks that every step in `pr-checks.yml` goes through it, so the workflow can't drift away
+  from its test.
 - **Outcome over output.** The worktree cleanup self-test checks that `.env` still exists on
   disk after `-Apply`, not only that the log says "keep".
 - **Real fixtures for gate exemptions.** The revert exemption is tested with a real
