@@ -11,7 +11,7 @@ const codexPath = new URL('.codex/config.toml', root);
  * A model of Claude Code's documented Bash rule matching (code.claude.com/docs/en/permissions,
  * read 2026-10-25): "*" matches any text, spaces included; a trailing " *" that is the only
  * wildcard also matches the bare command; deny and ask apply if any subcommand of a compound
- * command matches. It is a model, so it checks intent, not Claude Code itself.
+ * command matches, and leading VAR=value assignments are skipped. It is a model, so it checks intent, not Claude Code itself.
  */
 export function bashRuleMatches(rule, command) {
   const m = /^Bash\((.*)\)$/.exec(rule);
@@ -19,7 +19,8 @@ export function bashRuleMatches(rule, command) {
   const pattern = m[1].replace(/:\*$/, ' *');
   const re = new RegExp(`^${pattern.split('*').map((p) => p.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('.*')}$`, 's');
   const bare = (pattern.match(/\*/g) || []).length === 1 && pattern.endsWith(' *') ? pattern.slice(0, -2) : null;
-  return command.split(/\s*(?:&&|\|\||;|\|)\s*/).some((sub) => re.test(sub.trim()) || sub.trim() === bare);
+  const subs = command.split(/\s*(?:&&|\|\||;|\|)\s*/).map((sub) => sub.trim().replace(/^(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)+/, ''));
+  return subs.some((sub) => re.test(sub) || sub === bare);
 }
 
 export function decide(permissions, command) {
@@ -35,6 +36,7 @@ test('the rule model follows the documented examples', () => {
   assert.ok(bashRuleMatches('Bash(git log * main)', 'git log --output= main'));
   assert.ok(!bashRuleMatches('Bash(* --help *)', 'npm --help'));
   assert.ok(bashRuleMatches('Bash(rm *)', 'cd /tmp && rm -rf x'));
+  assert.ok(bashRuleMatches('Bash(rm *)', 'A=1 B=2 rm x'));
 });
 
 test('Claude settings are strict JSON with no blanket allows', { skip: !existsSync(claudePath) }, () => {
@@ -52,7 +54,7 @@ test('Claude settings deny the bypasses wherever the flag sits', { skip: !exists
       'git commit --no-verify -m x', 'git commit -m x --no-verify', 'git push --no-verify', 'git merge main --no-verify',
       'git commit -n -m x', 'git commit -m x -n', 'npm test && git commit -m x -n',
       'git push --force', 'git push origin main --force', 'git push --force-with-lease', 'git push -f origin main',
-      'git push origin main -f', 'git push origin +main',
+      'git push origin main -f', 'git push origin +main', 'GIT_TRACE=1 git push --force',
       'git reset --hard', 'git reset HEAD~1 --hard',
       'git config core.hooksPath /dev/null', 'git config --local core.hooksPath x', 'git -c core.hooksPath=/dev/null commit -m x',
       'git diff --output=/tmp/x', 'git log -p --output x', 'git show HEAD --output=x', 'git diff --ext-diff',
