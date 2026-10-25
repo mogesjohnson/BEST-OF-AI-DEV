@@ -4,9 +4,9 @@
 #
 # Trust: on pull_request, GitHub runs the PR's own copy of this file and of scripts/.
 # A PR could loosen pr-size.mjs and pass its own gate. So every gate runs the checker
-# copy from the BASE commit, through the base copy of gate.mjs. A PR can still edit this workflow file; only a required
-# review of .github/ (ruleset plus CODEOWNERS, with a reviewer who is not the author)
-# closes that hole.
+# copy from the BASE commit, through the base copy of gate.mjs. A PR can still edit
+# this workflow file; only a required review of .github/ (ruleset plus CODEOWNERS,
+# with a reviewer who is not the author) closes that hole.
 # Title and body reach the scripts through env vars. Never interpolate them into run:
 # lines, because a PR title is attacker-controlled text.
 name: pr-checks
@@ -29,6 +29,9 @@ jobs:
     env:
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      # Every gate reads these through gate.mjs (the checker-change path).
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
       # REPO-SPECIFIC: where the checks live.
       SCRIPTS: scripts
       # /REPO-SPECIFIC
@@ -59,20 +62,12 @@ jobs:
       - name: Title, body and commit messages
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BODY: ${{ github.event.pull_request.body }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: node "$GATE" pr-format.mjs
       - name: Size (lines, never commits)
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: node "$GATE" pr-size.mjs
       - name: Secrets and personal paths
         # Built-in patterns only: gitleaks is not installed here (no install step).
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: node "$GATE" secrets.mjs --all
       - name: Template drift (repos made from BEST-OF-AI-DEV)
         # REPO-SPECIFIC: point --template at a checkout of the template, or delete this step.
