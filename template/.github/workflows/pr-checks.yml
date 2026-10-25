@@ -64,5 +64,5 @@ jobs:
       - name: Template drift (repos made from BEST-OF-AI-DEV)
         # REPO-SPECIFIC: point --template at a checkout of the template, or delete this step.
         if: ${{ false }}
-        run: node "$SCRIPTS/check/template-sync.mjs" --template ../BEST-OF-AI-DEV/template
+        run: node "$CHECKS/template-sync.mjs" --template ../BEST-OF-AI-DEV/template
         # /REPO-SPECIFIC
