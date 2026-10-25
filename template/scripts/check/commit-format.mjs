@@ -8,7 +8,11 @@ export const TYPES = ['feat', 'fix', 'docs', 'test', 'refactor', 'perf', 'build'
 export const MAX_SUBJECT = 72;
 
 const SUBJECT = new RegExp(`^(${TYPES.join('|')})(\\([a-z0-9][a-z0-9._/-]*\\))?!?: \\S`);
-const EXEMPT = /^(Merge |Revert "|fixup! |squash! |amend! )/;
+// Local hook: git's own merge, revert and autosquash subjects are fine while you work.
+export const EXEMPT = /^(Merge |Revert "|fixup! |squash! |amend! )/;
+// PR gate: only reverts. A fixup! or "Merge ..." commit reaching main means history
+// was not cleaned up (real merge commits are excluded by --no-merges, not by subject).
+export const PR_EXEMPT = /^Revert "/;
 // "closes #12", "Fixed owner/repo#3", "resolves https://github.com/o/r/issues/4"
 export const CLOSING = /\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\b:?\s+(#\d+|[\w.-]+\/[\w.-]+#\d+|https?:\/\/\S+\/issues\/\d+)/i;
 const SCISSORS = /^# -+ >8 -+$/;
@@ -35,8 +39,8 @@ export function cleanMessage(raw, commentChar = '#') {
 }
 
 /** Returns a list of problems; empty means the subject is valid. */
-export function checkSubject(subject) {
-  if (EXEMPT.test(subject)) return [];
+export function checkSubject(subject, exempt = EXEMPT) {
+  if (exempt.test(subject)) return [];
   const problems = [];
   if (!SUBJECT.test(subject)) {
     if (SUBJECT.test(subject.replace(/^[^:]*/, (head) => head.toLowerCase()))) {
@@ -52,12 +56,12 @@ export function checkSubject(subject) {
 }
 
 /** Checks a whole commit message as git writes it to COMMIT_EDITMSG. */
-export function checkMessage(raw, commentChar = '#') {
+export function checkMessage(raw, commentChar = '#', exempt = EXEMPT) {
   const lines = cleanMessage(raw, commentChar);
   if (lines.length === 0) return ['empty commit message'];
   const [subject, second, ...body] = lines;
-  if (EXEMPT.test(subject)) return [];
-  const problems = checkSubject(subject);
+  if (exempt.test(subject)) return [];
+  const problems = checkSubject(subject, exempt);
   if (second !== undefined && second.trim() !== '') problems.push('leave one blank line between the subject and the body');
   if (body.some((l) => CLOSING.test(l))) problems.push('no closing keywords in the body; use a "Refs: #N" footer');
   return problems;
