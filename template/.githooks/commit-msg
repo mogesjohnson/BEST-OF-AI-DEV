@@ -1,0 +1,4 @@
+#!/bin/sh
+# BEST-OF-AI-DEV template v1. Installed by: node scripts/setup-hooks.mjs
+# Git for Windows runs this with its bundled sh, so it works from PowerShell too.
+exec node scripts/check/commit-msg.mjs "$1"
