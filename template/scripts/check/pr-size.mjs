@@ -7,14 +7,25 @@
 // ones do not inflate the total. Excludes lockfiles, generated files and, in a repo with a
 // template/ mirror, root files byte-identical to their template/ copy.
 // Exception: label "size-exception" plus a "Size exception: <reason>" line in the PR body
-// (CI reads PR_LABELS and PR_BODY), or SIZE_EXCEPTION="<reason>" locally.
+// (CI reads PR_LABELS and PR_BODY). SIZE_EXCEPTION="<reason>" works for a local push only.
+// PR_SIZE_LIMIT and PR_SIZE_TARGET can lower the numbers for one run, never raise them.
 // Exit 0 pass, 1 over the limit, 2 usage or git error.
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const LIMIT = Number(process.env.PR_SIZE_LIMIT || 600);
-export const TARGET = Number(process.env.PR_SIZE_TARGET || 400);
+// REPO-SPECIFIC: the hard limit and soft target. Change them here, in review, not per run.
+const MAX_LIMIT = 600;
+const MAX_TARGET = 400;
+// /REPO-SPECIFIC
+
+/** An env override can only tighten a number, never loosen it. */
+export function tighten(value, max) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 && n < max ? n : max;
+}
+export const LIMIT = tighten(process.env.PR_SIZE_LIMIT, MAX_LIMIT);
+export const TARGET = Math.min(tighten(process.env.PR_SIZE_TARGET, MAX_TARGET), LIMIT);
 
 export const EXCLUDE = [
   '**/package-lock.json', '**/pnpm-lock.yaml', '**/yarn.lock', '**/bun.lockb', '**/Cargo.lock',
@@ -56,7 +67,9 @@ export function parseNumstat(out) {
 }
 
 export function exceptionReason(env) {
-  if (env.SIZE_EXCEPTION && env.SIZE_EXCEPTION.trim().length >= 10) return env.SIZE_EXCEPTION.trim();
+  // SIZE_EXCEPTION lets a local push through; CI ignores it and needs the label and the line.
+  const ci = Boolean(env.CI || env.GITHUB_ACTIONS);
+  if (!ci && env.SIZE_EXCEPTION && env.SIZE_EXCEPTION.trim().length >= 10) return `${env.SIZE_EXCEPTION.trim()} (local only; the PR still needs the label)`;
   const labelled = (env.PR_LABELS || '').split(',').map((s) => s.trim()).includes('size-exception');
   // Same line only, and not inside an HTML comment (the PR template's example is one).
   const body = (env.PR_BODY || '').replace(/<!--[\s\S]*?(-->|$)/g, '');

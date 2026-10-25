@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { exceptionReason, globToRegExp, isExcluded, parseNumstat, summarize } from '../check/pr-size.mjs';
+import { exceptionReason, globToRegExp, isExcluded, parseNumstat, summarize, tighten } from '../check/pr-size.mjs';
 
 test('globs match the way the patterns read', () => {
   assert.ok(globToRegExp('**/yarn.lock').test('yarn.lock'));
@@ -54,4 +54,19 @@ test('the exception reason must be on the line itself, outside comments', () => 
   assert.equal(exceptionReason(env('<!-- Size exception: regenerated the vendored schema -->')), null, 'comment');
   assert.equal(exceptionReason(env('<!--\nSize exception: regenerated the vendored schema\n-->')), null, 'block comment');
   assert.ok(exceptionReason(env('Size exception: regenerated the vendored schema')));
+});
+
+test('env overrides can tighten the limits but not loosen them', () => {
+  assert.equal(tighten('300', 600), 300);
+  assert.equal(tighten('100000', 600), 600);
+  assert.equal(tighten('0', 600), 600);
+  assert.equal(tighten('lots', 600), 600);
+  assert.equal(tighten(undefined, 600), 600);
+});
+
+test('SIZE_EXCEPTION is ignored in CI', () => {
+  const reason = 'one-time bootstrap of the repo';
+  assert.ok(exceptionReason({ SIZE_EXCEPTION: reason }));
+  assert.equal(exceptionReason({ SIZE_EXCEPTION: reason, CI: 'true' }), null);
+  assert.equal(exceptionReason({ SIZE_EXCEPTION: reason, GITHUB_ACTIONS: 'true' }), null);
 });

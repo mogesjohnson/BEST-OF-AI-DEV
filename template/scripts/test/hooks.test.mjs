@@ -13,8 +13,9 @@ const root = fileURLToPath(new URL('../..', import.meta.url));
 
 // withoutGitEnv: when this runs from a pre-push hook, GIT_DIR points at the real repo.
 function run(cwd, cmd, args, env = {}) {
-  // CI is cleared because setup-hooks.mjs skips itself in CI.
-  return spawnSync(cmd, args, { cwd, encoding: 'utf8', env: { ...withoutGitEnv(), CI: '', ...env } });
+  // CI is cleared because setup-hooks.mjs skips itself in CI, and GITHUB_ACTIONS because
+  // pr-size ignores SIZE_EXCEPTION there.
+  return spawnSync(cmd, args, { cwd, encoding: 'utf8', env: { ...withoutGitEnv(), CI: '', GITHUB_ACTIONS: '', ...env } });
 }
 
 test('hooks and size gate work in a fresh repo with a spaced path', () => {
