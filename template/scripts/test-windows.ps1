@@ -11,6 +11,8 @@
     - pr-size passes a small branch and fails a 700-line one;
     - cleanup-worktrees.ps1 (dry run) proposes the merged worktree, keeps the dirty and the
       brand-new ones, and removes nothing;
+    - cleanup-worktrees.ps1 -Apply keeps a merged worktree whose only change is an ignored
+      .env, removes one that has only node_modules, and -Force then removes the first;
     - mcp-doctor.ps1 (dry run) finds the orphans in a fake process list, and reads the live
       list without stopping anything;
     - lefthook installs and runs the same commit-msg check (SKIP when lefthook is absent).
@@ -220,6 +222,31 @@ try {
     Add-Result 'FAIL' 'cleanup-worktrees dry run' "exit $($dry.Code), proposed=$proposed keptDirty=$keptDirty untouched=$stillThere : $(Get-Last $dry 6)"
   }
 
+  # 6b. cleanup-worktrees.ps1 -Apply with ignored files. Git's own dirty check skips them.
+  $wtIgnored = Join-Path $tmp 'wt ignored'
+  $infoDir = Join-Path $repo '.git\info'
+  [void](New-Item -ItemType Directory -Force -Path $infoDir)
+  Write-TextFile (Join-Path $infoDir 'exclude') ".env`nnode_modules/`n"
+  [void](Invoke-Setup 'worktree add ignored' 'git' @('worktree', 'add', '-q', '-b', 'ignored-wt', $wtIgnored, 'main'))
+  Write-TextFile (Join-Path $wtIgnored '.env') "TOKEN=placeholder`n"
+  [void](New-Item -ItemType Directory -Force -Path (Join-Path $wtMerged 'node_modules'))
+  Write-TextFile (Join-Path $wtMerged 'node_modules\x.js') "// rebuilt by npm`n"
+  $apply = Invoke-Tool $psExe @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $cleanup, '-Base', 'main', '-MinIdleHours', '0', '-Apply')
+  $envKept = (Test-Path -LiteralPath (Join-Path $wtIgnored '.env')) -and ($apply.Text -match 'keep .*wt ignored.*ignored files: \.env')
+  $mergedGone = -not (Test-Path -LiteralPath $wtMerged)
+  $dirtyKept = Test-Path -LiteralPath (Join-Path $wtDirty 'wip.txt')
+  if ($apply.Code -eq 0 -and $envKept -and $mergedGone -and $dirtyKept) {
+    Add-Result 'PASS' 'cleanup-worktrees -Apply keeps ignored .env, removes node_modules-only'
+  } else {
+    Add-Result 'FAIL' 'cleanup-worktrees -Apply keeps ignored .env, removes node_modules-only' "exit $($apply.Code), envKept=$envKept mergedGone=$mergedGone dirtyKept=$dirtyKept : $(Get-Last $apply 6)"
+  }
+  $forced = Invoke-Tool $psExe @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $cleanup, '-Base', 'main', '-MinIdleHours', '0', '-Apply', '-Force')
+  if ($forced.Code -eq 0 -and -not (Test-Path -LiteralPath $wtIgnored) -and (Test-Path -LiteralPath $wtDirty)) {
+    Add-Result 'PASS' 'cleanup-worktrees -Apply -Force removes the ignored-only worktree'
+  } else {
+    Add-Result 'FAIL' 'cleanup-worktrees -Apply -Force removes the ignored-only worktree' "exit $($forced.Code): $(Get-Last $forced 6)"
+  }
+
   # 7. mcp-doctor.ps1 against a fake process list, then the live one. Dry run only.
   $now = Get-Date
   $fake = @(
@@ -283,6 +310,7 @@ try {
     if (Test-Path -LiteralPath (Join-Path $repo '.git')) {
       [void](Invoke-Tool 'git' @('-C', $repo, 'worktree', 'remove', '--force', (Join-Path $tmp 'wt merged')))
       [void](Invoke-Tool 'git' @('-C', $repo, 'worktree', 'remove', '--force', (Join-Path $tmp 'wt dirty')))
+      [void](Invoke-Tool 'git' @('-C', $repo, 'worktree', 'remove', '--force', (Join-Path $tmp 'wt ignored')))
     }
     Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue
   }
