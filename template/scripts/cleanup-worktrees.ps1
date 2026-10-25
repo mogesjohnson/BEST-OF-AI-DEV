@@ -92,6 +92,7 @@ Write-Output "cleanup-worktrees: $($records.Count) worktree(s), base $Base, stal
 
 $failed = 0
 $candidates = 0
+$keptIgnored = 0
 $now = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 for ($i = 0; $i -lt $records.Count; $i++) {
   $wt = $records[$i]
@@ -155,6 +156,7 @@ for ($i = 0; $i -lt $records.Count; $i++) {
     if ($ignored.Count -gt 5) { $shown = "$shown and $($ignored.Count - 5) more" }
     if (-not $Force) {
       Write-Output "  keep    $label ($reason, but has ignored files: $shown. -Force removes them too)"
+      $keptIgnored++
       continue
     }
     $reason = "$reason; deletes ignored files: $shown"
@@ -183,6 +185,9 @@ for ($i = 0; $i -lt $records.Count; $i++) {
 
 if (-not $Apply -and $candidates -gt 0) {
   Write-Output "cleanup-worktrees: $candidates candidate(s). Run again with -Apply to remove them."
+}
+if ($keptIgnored -gt 0) {
+  Write-Output "cleanup-worktrees: kept $keptIgnored worktree(s) only for ignored files. Check them, then add -Force."
 }
 if ($failed -gt 0) { exit 1 }
 exit 0
