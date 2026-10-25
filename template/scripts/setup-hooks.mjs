@@ -67,7 +67,8 @@ if (existsSync(join(top, 'lefthook.yml'))) {
   console.error('  Fix one of these:');
   console.error('  - Delete lefthook.yml to use .githooks/ (the default).');
   console.error('  - Add lefthook as a dev dependency. That is a new dependency: ask first (RULES.md R3).');
-  console.error('    With no package.json yet, run "npm init -y" first. Then run this script again.');
+  console.error('    With no package.json yet, run "npm init -y" first. Installing lefthook does not');
+  console.error('    rerun this script, so run "node scripts/setup-hooks.mjs" again yourself.');
   process.exit(1);
 }
 
