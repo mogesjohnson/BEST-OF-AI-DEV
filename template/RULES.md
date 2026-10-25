@@ -39,7 +39,7 @@ never `git add -A` or `git add .`.
 
 **R5. History is append-only once pushed.** No force-push, no rebase of pushed work,
 no `--amend` on pushed commits, and no `--no-verify`. To update a branch, merge `main` into it.
-*Enforced by:* agent deny rules, which are prefix speed bumps (see `docs/agents.md`). Nothing
+*Enforced by:* agent deny rules, which are speed bumps with known gaps (see `docs/agents.md`). Nothing
 stops a force-push from a plain shell unless a `main` ruleset blocks force pushes.
 
 **R6. Writers do not review, and reviewers do not write.** The author never approves or merges

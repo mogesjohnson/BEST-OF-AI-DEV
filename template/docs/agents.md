@@ -18,8 +18,12 @@ alongside it. None of them adds rules of its own.
 
 - **Claude Code** allows the repo's own check commands and read-only git. It asks before pushing,
   installing packages, `gh`, `curl`, web fetches and edits to CI, hooks, scripts or
-  `package.json`. It denies reading `.env*` and key files, force-pushing, `--no-verify`,
-  `reset --hard`, changing `core.hooksPath` and `rm -rf`.
+  `package.json`. It denies reading `.env*` and key files, `--no-verify` anywhere in a command,
+  `git commit -n`, force pushes (`--force*`, `-f`, `+ref`), `reset --hard`, any mention of
+  `core.hooksPath`, git's `--output` and `--ext-diff` (so the read-only allows cannot write files
+  or run a diff program), and `rm -rf`. The rules put `*` before the flag, so the flag's position
+  does not matter. `scripts/test/agent-config.test.mjs` runs a table of commands through a model
+  of the documented matcher. Change a rule and the table tells you what moved.
   Deny and ask rules apply as soon as the file is in the repo. Allow rules wait until you trust the folder.
 - **Codex** runs in `workspace-write`: no writes outside the repo and no network from
   commands. Web search uses the cached index. Variables named like keys, secrets or tokens are
@@ -27,10 +31,12 @@ alongside it. None of them adds rules of its own.
 
 ## What they do not do
 
-Deny lists are speed bumps, not a sandbox. `Bash(git push --force *)` does not match
-`git push origin +main` (only the broad `git push` ask rule catches that), `bash -c "..."`, or a
-script that runs git for the agent. Treat them as a
-statement of intent that catches honest mistakes. Real isolation comes from:
+Deny lists are speed bumps, not a sandbox. Claude Code documents that rules do not see through
+`git -C <dir> push`, `git -c key=value ...`, a full path such as `/usr/bin/git`, or a script
+that runs git for the agent. Combined short flags (`git commit -anm x`) also get past the `-n`
+rule. The test file keeps these as named gaps so they stay visible. Treat the list as a
+statement of intent that catches honest mistakes; a PreToolUse hook can parse the command
+properly if you need more. Real isolation comes from:
 
 1. one worktree per agent, so a bad command damages one branch;
 2. Codex's sandbox, or a container or VM for anything you would not run yourself;
