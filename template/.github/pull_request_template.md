@@ -12,8 +12,8 @@ Tracking: <!-- #123, a task spec path such as docs/tasks/0007-retry.md, or "none
 <!-- One line per check: status, then the exact command or evidence.
      Status is pass, fail, blocked or not_run. A CI run blocked by billing is "blocked". -->
 
-- pass: `npm run lint`
-- not_run: <!-- say why -->
+- <!-- pass: `npm test` -->
+- <!-- not_run: e2e, because ... -->
 
 ## Size
 
