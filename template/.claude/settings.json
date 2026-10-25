@@ -16,7 +16,8 @@
       "Bash(git diff *)",
       "Bash(git log *)",
       "Bash(git show *)",
-      "Bash(git branch --show-current)"
+      "Bash(git branch --show-current)",
+      "Bash(git config --get *)"
     ],
     "ask": [
       "Bash(git push *)",
@@ -49,8 +50,12 @@
       "Bash(git push * +*)",
       "Bash(git reset --hard*)",
       "Bash(git reset * --hard*)",
-      "Bash(*core.hooksPath*)",
-      "Bash(*core.hookspath*)",
+      "Bash(git *core.hooksPath *)",
+      "Bash(git *core.hookspath *)",
+      "Bash(git *core.hooksPath=*)",
+      "Bash(git *core.hookspath=*)",
+      "Bash(git *--unset* *core.hooksPath*)",
+      "Bash(git *--unset* *core.hookspath*)",
       "Bash(git * --output*)",
       "Bash(git * --ext-diff*)",
       "Bash(rm -rf *)",

@@ -57,11 +57,15 @@ test('Claude settings deny the bypasses wherever the flag sits', { skip: !exists
       'git push origin main -f', 'git push origin +main', 'GIT_TRACE=1 git push --force',
       'git reset --hard', 'git reset HEAD~1 --hard',
       'git config core.hooksPath /dev/null', 'git config --local core.hooksPath x', 'git -c core.hooksPath=/dev/null commit -m x',
+      'git config --unset core.hooksPath', 'git config --unset-all core.hookspath', 'git config set core.hooksPath x',
       'git diff --output=/tmp/x', 'git log -p --output x', 'git show HEAD --output=x', 'git diff --ext-diff',
       'rm -rf node_modules', 'rm -fr dist',
     ],
     ask: ['git push', 'git push -u origin grok/topic', 'npm install left-pad', 'gh pr create', 'curl https://example.com'],
-    allow: ['npm test', 'git status', 'git diff', 'git diff --stat main', 'git log --oneline -5', 'git log -n 5', 'git show HEAD'],
+    allow: [
+      'npm test', 'git status', 'git diff', 'git diff --stat main', 'git log --oneline -5', 'git log -n 5', 'git show HEAD',
+      'git config --get core.hooksPath',
+    ],
   };
   for (const [want, commands] of Object.entries(expect)) {
     for (const c of commands) assert.equal(decide(permissions, c), want, c);
@@ -71,7 +75,11 @@ test('Claude settings deny the bypasses wherever the flag sits', { skip: !exists
 test('known gaps stay written down', { skip: !existsSync(claudePath) }, () => {
   // Not matched by any rule; docs/agents.md lists them. If one starts matching, update the docs.
   const { permissions } = JSON.parse(readFileSync(claudePath, 'utf8'));
-  for (const c of ['git -C . push --force', 'git commit -anm x', '/usr/bin/git push --force']) {
+  const gaps = [
+    'git -C . push --force', 'git commit -anm x', '/usr/bin/git push --force',
+    'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=x git commit -m x',
+  ];
+  for (const c of gaps) {
     assert.notEqual(decide(permissions, c), 'deny', c);
   }
 });
