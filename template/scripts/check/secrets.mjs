@@ -26,7 +26,8 @@ export const PATTERNS = [
   ['Stripe live key', /\b[rs]k_live_[A-Za-z0-9]{20,}/],
   ['JWT (Supabase keys are JWTs too)', /\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/],
   ['personal Windows path', /\b[A-Za-z]:[\\/]+Users[\\/]+(?!(Public|Default|<|\.\.\.|…|%))[^\\/\s"'`<>]+/i],
-  ['personal home path', /(?<![\w.])\/(Users|home)\/(?!(runner|node|user|<|\.\.\.|…|\$))[a-z][\w.-]+\//],
+  // Any case: macOS paths are case-insensitive, and capitalised user names are common.
+  ['personal home path', /(?<![\w.])\/(Users|home)\/(?!((runner|node|user)\/|<|\.\.\.|…|\$))[a-z][\w.-]+\//i],
 ];
 // Case-insensitive: Windows and macOS treat .ENV and cert.P12 as the same files.
 export const BAD_FILES = [/(^|\/)\.env(\.(?!example$|sample$|template$)[\w.-]+)?$/i, /\.(pem|p12|pfx|key)$/i, /(^|\/)id_(rsa|ed25519|ecdsa)$/i];
