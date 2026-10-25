@@ -58,6 +58,12 @@
       "Bash(git *--unset* *core.hookspath*)",
       "Bash(git * --output*)",
       "Bash(git * --ext-diff*)",
+      "Bash(git * --no-index*)",
+      "Bash(git show *.env*)",
+      "Bash(git show *.pem*)",
+      "Bash(git show *.key*)",
+      "Bash(git *> *)",
+      "Bash(git *>>*)",
       "Bash(rm -rf *)",
       "Bash(rm -fr *)"
     ]
