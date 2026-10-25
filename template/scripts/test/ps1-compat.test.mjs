@@ -17,7 +17,7 @@ export function codeOnly(src) {
 }
 
 test('there are PowerShell scripts to check', () => {
-  assert.ok(files.length >= 2, `found ${files.join(', ')}`);
+  assert.ok(files.length >= 3, `found ${files.join(', ')}`);
 });
 
 for (const f of files) {
