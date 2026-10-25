@@ -52,9 +52,10 @@ hosting under a subpath. The site isn't deployed yet.
 ## Known gaps
 
 - **Self-merge.** R6 says writers don't merge their own PRs, but every PR here was opened and
-  merged by the same account. From #25 on, each merge waited for green checks; #16, #22 and
-  #23 were merged before theirs had passed. A ruleset requiring review would fix
-  this. That's the owner's call, and none is set up yet.
+  merged by the same account. From #25 on, each merge waited for green checks. #16, #22, #23
+  and #24 were merged before theirs had passed. #8 to #11 were merged with red checks while
+  GitHub Actions billing was failing every run, so their checks never really ran. A ruleset requiring
+  review would fix this. That's the owner's call, and none is set up yet.
 - **Checks are advisory** until a ruleset marks `pr-checks` as required.
 - **Not run here:** gitleaks, lefthook and actionlint, a live agent session against the
   configs, and the checker-change path (its `checker-change` and `size-exception` labels
