@@ -37,14 +37,24 @@
       "Read(./.env.*)",
       "Read(./**/*.pem)",
       "Read(./**/*.key)",
-      "Bash(git push --force *)",
-      "Bash(git push -f *)",
-      "Bash(git push --force-with-lease *)",
-      "Bash(git commit --no-verify *)",
+      "Bash(* --no-verify*)",
       "Bash(git commit -n *)",
-      "Bash(git reset --hard *)",
-      "Bash(git config core.hooksPath *)",
-      "Bash(rm -rf *)"
+      "Bash(git commit * -n *)",
+      "Bash(git commit * -n)",
+      "Bash(git push --force*)",
+      "Bash(git push * --force*)",
+      "Bash(git push -f *)",
+      "Bash(git push * -f *)",
+      "Bash(git push * -f)",
+      "Bash(git push * +*)",
+      "Bash(git reset --hard*)",
+      "Bash(git reset * --hard*)",
+      "Bash(*core.hooksPath*)",
+      "Bash(*core.hookspath*)",
+      "Bash(git * --output*)",
+      "Bash(git * --ext-diff*)",
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)"
     ]
   }
 }
