@@ -7,6 +7,12 @@
 An explicit instruction from the owner in the current task overrides any rule here.
 Record the override in the PR body under `Overrides:`.
 
+<!-- REPO-SPECIFIC: what GitHub enforces for this repo. -->
+Server-side today: unknown. Check Settings, Rules, and replace this with what exists
+(ruleset name, required checks, required reviews) or "nothing". Until a ruleset exists, every
+rule below that says "if a ruleset" is local or honor.
+<!-- /REPO-SPECIFIC -->
+
 ## Scope
 
 **R1. Stay inside the task.** Edit only files the task spec names or clearly implies.
@@ -19,8 +25,9 @@ private agent histories or machine config unless the task says so.
 
 **R3. Ask before high-impact changes.** New dependencies, CI or workflow edits, auth,
 billing, data deletion, public API changes and license changes need the owner's yes first.
-*Enforced by:* CODEOWNERS on `.github/`, `package.json` and lockfiles, which only binds when the
-`main` ruleset requires code-owner review. Honor for the rest.
+*Enforced by:* honor. CODEOWNERS lists `.github/`, `package.json` and lockfiles, but it binds only
+if a `main` ruleset requires code-owner review and the author is not the code owner. While
+agents push as the owner's account, it requests nothing.
 
 ## Git
 
@@ -31,22 +38,26 @@ never `git add -A` or `git add .`.
 
 **R5. History is append-only once pushed.** No force-push, no rebase of pushed work,
 no `--amend` on pushed commits, and no `--no-verify`. To update a branch, merge `main` into it.
-*Enforced by:* branch ruleset on `main`, agent deny rules, hooks.
+*Enforced by:* agent deny rules, which are prefix speed bumps (see `docs/agents.md`). Nothing
+stops a force-push from a plain shell unless a `main` ruleset blocks force pushes.
 
 **R6. Writers do not review, and reviewers do not write.** The author never approves or merges
 its own PR. Review runs as a separate identity and a separate read-only session.
-*Enforced by:* branch ruleset (one approving review, not the last pusher). Honor until a
-separate reviewer account or bot exists. See `docs/` "Independent review".
+*Enforced by:* honor. A ruleset requiring one approval from someone other than the last pusher
+would enforce it, but not while every agent pushes as the owner's account: GitHub sees one
+person. That needs a separate reviewer account or bot. See `docs/` "Independent review".
 
 **R7. Commits and PRs follow the format.** Conventional Commits, subject at most 72 characters,
 no closing keywords (`closes`, `fixes`, `resolves`). Link issues with `Refs: #12`.
 Issues close only when a human confirms acceptance.
-*Enforced by:* `.githooks/commit-msg`, `pr-checks` workflow.
+*Enforced by:* `.githooks/commit-msg` (skippable with `--no-verify`) and the `pr-checks` workflow,
+which blocks a merge only if a ruleset marks it required.
 
 **R8. PRs stay small.** At most 600 changed lines, lockfiles and generated files excluded;
 aim under 400. Commit count is never the measure. Bigger work becomes stacked PRs.
 An exception needs the `size-exception` label and a `Size exception:` line saying why.
-*Enforced by:* `scripts/check/pr-size.mjs` on pre-push and in CI.
+*Enforced by:* `scripts/check/pr-size.mjs` on pre-push and in `pr-checks`, which runs the base
+commit's copy so a PR cannot loosen its own gate. Advisory until a ruleset requires `pr-checks`.
 
 ## Evidence
 
@@ -69,7 +80,8 @@ with the exact prerequisite, then continue with independent work.
 **R12. No secrets, no personal data, no machine paths.** Never commit `.env*`, keys, tokens,
 cookies, private keys, raw transcripts, or absolute paths such as `C:\Users\<name>\`.
 Use placeholders like `@@HOME@@` in docs.
-*Enforced by:* `.gitignore`, gitleaks (pre-commit), built-in secret scan, agent deny rules.
+*Enforced by:* `.gitignore`, the built-in secret scan (pre-commit and CI), gitleaks on pre-commit
+when it is installed (CI does not install it), agent deny rules.
 
 **R13. Leave nothing running.** Stop every dev server, watcher, MCP server and background job
 you started. Remove your worktree after merge. Report anything you could not stop.

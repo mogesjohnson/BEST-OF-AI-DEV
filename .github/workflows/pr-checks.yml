@@ -1,5 +1,12 @@
 # BEST-OF-AI-DEV template v1. Fast PR gates; no install step, about 20 seconds.
 # This is the workflow to mark required in the main ruleset: it runs on every PR.
+# Until a ruleset marks it required, a red run does not block the merge button.
+#
+# Trust: on pull_request, GitHub runs the PR's own copy of this file and of scripts/.
+# A PR could loosen pr-size.mjs and pass its own gate. So the gates run the checker
+# copies from the BASE commit. A PR can still edit this workflow file; only a required
+# review of .github/ (ruleset plus CODEOWNERS, with a reviewer who is not the author)
+# closes that hole.
 # Title and body reach the scripts through env vars. Never interpolate them into run:
 # lines, because a PR title is attacker-controlled text.
 name: pr-checks
@@ -30,20 +37,32 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Use the checkers from the base commit
+        # Falls back to the PR's copy only when the base has none (the PR that adds them).
+        run: |
+          if git cat-file -e "$BASE_SHA:$SCRIPTS/check/pr-size.mjs" 2>/dev/null; then
+            mkdir -p "$RUNNER_TEMP/base"
+            git archive "$BASE_SHA" "$SCRIPTS" | tar -x -C "$RUNNER_TEMP/base"
+            echo "CHECKS=$RUNNER_TEMP/base/$SCRIPTS/check" >> "$GITHUB_ENV"
+          else
+            echo "::warning::base has no $SCRIPTS/check; using the PR's own checkers"
+            echo "CHECKS=$SCRIPTS/check" >> "$GITHUB_ENV"
+          fi
       - name: Title, body and commit messages
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
-        run: node "$SCRIPTS/check/pr-format.mjs"
+        run: node "$CHECKS/pr-format.mjs"
       - name: Size (lines, never commits)
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-        run: node "$SCRIPTS/check/pr-size.mjs"
+        run: node "$CHECKS/pr-size.mjs"
       - name: Secrets and personal paths
-        run: node "$SCRIPTS/check/secrets.mjs" --all
+        # Built-in patterns only: gitleaks is not installed here (no install step).
+        run: node "$CHECKS/secrets.mjs" --all
       - name: Template drift (repos made from BEST-OF-AI-DEV)
         # REPO-SPECIFIC: point --template at a checkout of the template, or delete this step.
         # This repo is the template: compare template/ with the root.
-        run: node "$SCRIPTS/check/template-sync.mjs" --skip scripts/
+        run: node "$CHECKS/template-sync.mjs" --skip scripts/
         # /REPO-SPECIFIC
