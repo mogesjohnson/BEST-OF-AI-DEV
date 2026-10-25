@@ -23,6 +23,9 @@ npm run typecheck
 npm run build
 ```
 
+CI runs the same three commands in `.github/workflows/site.yml`, only when `site/` or
+`docs/why/` changes.
+
 `npm run build` writes plain HTML to `site/out/`. To host it under a subpath, such as GitHub
 Pages for this repo, set `BASE_PATH=/BEST-OF-AI-DEV` before building. In PowerShell 5.1, run
 `$env:BASE_PATH = "/BEST-OF-AI-DEV"` on its own line, then `npm run build`.
