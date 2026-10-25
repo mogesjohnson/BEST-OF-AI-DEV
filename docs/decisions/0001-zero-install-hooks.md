@@ -15,7 +15,8 @@ cannot download executables, and lefthook refuses to install while `core.hooksPa
 
 We will ship `.githooks/` plus Node scripts as the default. `npm install` runs `prepare`, which
 sets `core.hooksPath`. Repos that want lefthook copy `optional/lefthook.yml`, and
-`setup-hooks.mjs` switches to it when both the file and the binary exist.
+`setup-hooks.mjs` switches to it. If the file exists but the binary does not, it exits 1 and
+keeps `.githooks/` active rather than guessing.
 
 ## Options considered
 
