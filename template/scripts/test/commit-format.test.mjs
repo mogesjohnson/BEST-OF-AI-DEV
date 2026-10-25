@@ -43,7 +43,7 @@ test('strips a leading BOM from PowerShell-written messages', () => {
 test('keeps "#12 ..." lines that git commit -m would keep', () => {
   const problems = checkMessage('#12 add thing');
   assert.notDeepEqual(problems, ['empty commit message']);
-  assert.match(problems.join(), /type\(scope\)/);
+  assert.match(problems.join(), /start with the type/);
   assert.deepEqual(checkMessage('feat: a\n\n#12 is the issue'), [], 'a "#12" body line is content');
 });
 
@@ -55,4 +55,10 @@ test('honors a custom comment character', () => {
 test('names lowercase as the fix for uppercase type or scope', () => {
   assert.match(checkSubject('Fix(API): handle 429').join(), /lowercase/);
   assert.match(checkSubject('feat(UI): add x').join(), /lowercase/);
+});
+
+test('points issue-first subjects at the Refs footer', () => {
+  assert.match(checkSubject('#63 Keep a turn open').join(), /Refs: #N/);
+  assert.match(checkSubject('#63 Merge PR #74: adopt picks').join(), /Refs: #N/);
+  assert.doesNotMatch(checkSubject('Added stuff').join(), /Refs: #N/);
 });

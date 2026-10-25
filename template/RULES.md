@@ -31,7 +31,8 @@ agents push as the owner's account, it requests nothing.
 
 ## Git
 
-**R4. One task, one branch, one worktree.** Branch `<agent>/<short-topic>` off fresh `main`.
+**R4. One task, one branch, one worktree.** Branch `<agent>/<short-topic>` (or `<agent>/<issue>-<topic>`)
+off fresh `main`.
 Run `git status` and `git branch --show-current` before every commit. Stage explicit paths;
 never `git add -A` or `git add .`.
 *Enforced by:* honor. `scripts/cleanup-worktrees.ps1` finds leftovers.
