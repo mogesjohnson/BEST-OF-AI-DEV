@@ -3,8 +3,8 @@
 # Until a ruleset marks it required, a red run does not block the merge button.
 #
 # Trust: on pull_request, GitHub runs the PR's own copy of this file and of scripts/.
-# A PR could loosen pr-size.mjs and pass its own gate. So the gates run the checker
-# copies from the BASE commit. A PR can still edit this workflow file; only a required
+# A PR could loosen pr-size.mjs and pass its own gate. So every gate runs the checker
+# copy from the BASE commit, through the base copy of gate.mjs. A PR can still edit this workflow file; only a required
 # review of .github/ (ruleset plus CODEOWNERS, with a reviewer who is not the author)
 # closes that hole.
 # Title and body reach the scripts through env vars. Never interpolate them into run:
@@ -38,50 +38,44 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Use the checkers from the base commit
-        # Falls back to the PR's copy only when the base has none (the PR that adds them), or on
-        # the checker-change path (RULES.md R15): label, a "Checker change:" line, and a diff
-        # under $SCRIPTS/check/. The PR's own checkers must then pass, and a reviewer reads them.
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        # Every gate runs the base commit's checker through gate.mjs, which is also taken from the
+        # base. The checker-change path (RULES.md R15) can only turn a failure of the checker the
+        # PR changes into a warning, and then the PR's copy must pass. The PR's own copies run
+        # only when the base has no $SCRIPTS/check yet (the PR that adds them).
         run: |
-          own=no
-          case ",$PR_LABELS," in *,checker-change,*)
-            if printf '%s\n' "$PR_BODY" | grep -Eq '^Checker change: *[^ ]' &&
-               git diff --name-only "$BASE_SHA...$HEAD_SHA" -- "$SCRIPTS/check/" | grep -q .; then
-              own=yes
-            else
-              echo "::error::checker-change needs a 'Checker change:' line and a change under $SCRIPTS/check/"
-              exit 1
-            fi ;;
-          esac
-          if [ "$own" = yes ]; then
-            echo "::warning::checker-change: running this PR's own checkers; review the checker diff"
-            echo "CHECKS=$SCRIPTS/check" >> "$GITHUB_ENV"
-          elif git cat-file -e "$BASE_SHA:$SCRIPTS/check/pr-size.mjs" 2>/dev/null; then
+          if git cat-file -e "$BASE_SHA:$SCRIPTS/check/pr-size.mjs" 2>/dev/null; then
             mkdir -p "$RUNNER_TEMP/base"
             git archive "$BASE_SHA" "$SCRIPTS" | tar -x -C "$RUNNER_TEMP/base"
-            echo "CHECKS=$RUNNER_TEMP/base/$SCRIPTS/check" >> "$GITHUB_ENV"
+            echo "BASE_CHECKS=$RUNNER_TEMP/base/$SCRIPTS/check" >> "$GITHUB_ENV"
           else
             echo "::warning::base has no $SCRIPTS/check; using the PR's own checkers"
-            echo "CHECKS=$SCRIPTS/check" >> "$GITHUB_ENV"
+            echo "BASE_CHECKS=$SCRIPTS/check" >> "$GITHUB_ENV"
+          fi
+          if git cat-file -e "$BASE_SHA:$SCRIPTS/check/gate.mjs" 2>/dev/null; then
+            echo "GATE=$RUNNER_TEMP/base/$SCRIPTS/check/gate.mjs" >> "$GITHUB_ENV"
+          else
+            echo "GATE=$SCRIPTS/check/gate.mjs" >> "$GITHUB_ENV"
           fi
       - name: Title, body and commit messages
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-        run: node "$CHECKS/pr-format.mjs"
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: node "$GATE" pr-format.mjs
       - name: Size (lines, never commits)
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
-        run: node "$CHECKS/pr-size.mjs"
+        run: node "$GATE" pr-size.mjs
       - name: Secrets and personal paths
         # Built-in patterns only: gitleaks is not installed here (no install step).
-        run: node "$CHECKS/secrets.mjs" --all
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: node "$GATE" secrets.mjs --all
       - name: Template drift (repos made from BEST-OF-AI-DEV)
         # REPO-SPECIFIC: point --template at a checkout of the template, or delete this step.
         # This repo is the template: compare template/ with the root.
-        run: node "$CHECKS/template-sync.mjs" --skip scripts/
+        run: node "$GATE" template-sync.mjs --skip scripts/
         # /REPO-SPECIFIC
