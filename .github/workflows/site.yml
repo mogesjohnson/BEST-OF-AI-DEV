@@ -21,6 +21,10 @@ on:
 permissions:
   contents: read
 
+# Next.js sends anonymous usage data from builds unless this is set.
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+
 concurrency:
   group: site-${{ github.ref }}
   cancel-in-progress: true
