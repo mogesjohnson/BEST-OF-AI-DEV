@@ -21,7 +21,7 @@ that enforce them, a docs site explaining why each one matters, and migration no
 - [ ] `template/` holds AGENTS.md (canonical), vendor pointer files, RULES.md, task spec and ADR
       templates, PR and issue templates, CODEOWNERS, hooks, size check, CI and agent configs.
 - [ ] `npm test` passes, and `template-sync` proves the root follows the template.
-- [ ] `scripts/test-windows.ps1` runs under Windows PowerShell 5.1 and prints PASS/FAIL per check.
+- [ ] `template/scripts/test-windows.ps1` runs under Windows PowerShell 5.1 and prints PASS/FAIL per check.
 - [ ] The docs site in `site/` builds locally with `npm run build`, reusing shadow-docs' styling.
 - [ ] README.md about the owner uses only verified facts; everything else is `TODO(verify)`.
 - [ ] Migration notes list per-repo changes without editing those repos.
@@ -47,3 +47,4 @@ changed lines. Actions minutes are used up until 2026-11-01, so local checks are
 ## Open questions
 
 - 400 or 600 lines as the hard limit? See ADR 0003.
+- Keep zero-install hooks as the default? See ADR 0001.

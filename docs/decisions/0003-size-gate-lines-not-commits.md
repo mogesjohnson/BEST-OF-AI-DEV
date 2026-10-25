@@ -2,7 +2,7 @@
 
 Status: proposed (owner to confirm the numbers)
 Date: 2026-10-25
-Deciders: Moges Johnson (owner), Grok Bot (proposed)
+Deciders: Grok Bot (proposed); Moges Johnson to accept or reject
 
 ## Context
 

@@ -1,8 +1,8 @@
 # 0001: Zero-install git hooks by default, lefthook opt-in
 
-Status: accepted
+Status: proposed (owner to confirm)
 Date: 2026-10-25
-Deciders: Moges Johnson (owner), Grok Bot (proposed)
+Deciders: Grok Bot (proposed); Moges Johnson to accept or reject
 
 ## Context
 

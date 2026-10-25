@@ -2,7 +2,7 @@
 
 Status: accepted
 Date: 2026-10-25
-Deciders: Moges Johnson (owner), Grok Bot (proposed)
+Deciders: Grok Bot (an internal layout choice for this repo only)
 
 ## Context
 
