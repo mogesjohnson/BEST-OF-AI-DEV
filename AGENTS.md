@@ -47,6 +47,7 @@ Run these from the repo root. They are the only definition of "checks pass".
 - Each result is reported as `pass`, `fail`, `blocked` or `not_run`. Never round up.
 - Docs that describe the changed behavior are updated in the same PR.
 - Nothing is left running: no dev servers, watchers, MCP servers or stray worktrees.
+  On Windows, `scripts/cleanup-worktrees.ps1` and `scripts/mcp-doctor.ps1` list them (dry run).
 
 ## Hard rules
 
