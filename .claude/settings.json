@@ -62,6 +62,8 @@
       "Bash(git show *.env*)",
       "Bash(git show *.pem*)",
       "Bash(git show *.key*)",
+      "Bash(git log *.env*)",
+      "Bash(git diff *.env*)",
       "Bash(git *> *)",
       "Bash(git *>>*)",
       "Bash(rm -rf *)",

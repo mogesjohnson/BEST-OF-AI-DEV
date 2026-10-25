@@ -61,6 +61,7 @@ test('Claude settings deny the bypasses wherever the flag sits', { skip: !exists
       'git diff --output=/tmp/x', 'git log -p --output x', 'git show HEAD --output=x', 'git diff --ext-diff',
       'git diff --no-index /dev/null ../.env', 'git diff --stat --no-index a b',
       'git show HEAD:.env', 'git show main:config/.env.local', 'git show HEAD:certs/server.pem', 'git show HEAD:id.key',
+      'git log -p -- .env', 'git diff HEAD~3 -- config/.env.local',
       'git log > /tmp/out.txt', 'git log -p >> log.txt', 'git diff main > patch.diff',
       'rm -rf node_modules', 'rm -fr dist',
     ],

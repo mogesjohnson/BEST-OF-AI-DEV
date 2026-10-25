@@ -25,7 +25,7 @@ permissions) and Antigravity's rules page. Re-check when you upgrade; these move
   `package.json`. It denies reading `.env*` and key files, `--no-verify` anywhere in a command,
   `git commit -n`, force pushes (`--force*`, `-f`, `+ref`), `reset --hard`, setting or unsetting
   `core.hooksPath` (reading it with `git config --get` is allowed), git's `--output`, `--ext-diff`
-  and `--no-index`, `git show` of `.env`, `.pem` or `.key` paths, git output redirected with `>`
+  and `--no-index`, `git show` of `.env`, `.pem` or `.key` paths, `git log` and `git diff` of `.env` paths, git output redirected with `>`
   or `>>`, and `rm -rf`. Those git rules exist because `git diff`, `git log` and `git show` are
   allowed: without them, a read-only allow could write files, run a diff program, or print a
   secret from history or from outside the repo. The rules put `*` before the flag, so the flag's position
