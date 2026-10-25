@@ -34,14 +34,15 @@ export function parseFrontMatter(source: string): { data: Record<string, string>
   return { data, body: source.slice(m[0].length) };
 }
 
-const WHY_URL = new RegExp(`^${REPO_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/blob/main/docs/why/(?:\\d+-)?([a-z0-9-]+)\\.md(#[\\w-]+)?$`);
+const WHY_PREFIX = `${REPO_URL}/blob/main/docs/why/`;
+const WHY_FILE = /^(?:\d+-)?([a-z0-9-]+)\.md(#[\w-]+)?$/;
 
 /**
  * Pages link to each other with full GitHub URLs, so the links work on GitHub. On the site,
  * those links go to the rendered page instead. index.md maps to the home page.
  */
 export function localHref(href: string, basePath = process.env.BASE_PATH || ""): string {
-  const m = WHY_URL.exec(href);
+  const m = href.startsWith(WHY_PREFIX) ? WHY_FILE.exec(href.slice(WHY_PREFIX.length)) : null;
   if (!m) return href;
   return `${basePath}${hrefOf(m[1] === "index" ? "" : m[1])}${m[2] ?? ""}`;
 }
