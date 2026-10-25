@@ -50,7 +50,8 @@ person. That needs a separate reviewer account or bot. See `docs/` "Independent 
 
 **R7. Commits and PRs follow the format.** Conventional Commits with a lowercase type and scope
 (`fix(api): ...`), subject at most 72 characters, no closing keywords (`closes`, `fixes`, `resolves`). Link issues with `Refs: #12`.
-Issues close only when a human confirms acceptance.
+Issues close only when a human confirms acceptance. Locally, `fixup!` and `Merge` subjects are
+fine; in a PR only `Revert "..."` is exempt, and Dependabot PRs skip the format gate.
 *Enforced by:* `.githooks/commit-msg` (skippable with `--no-verify`) and the `pr-checks` workflow,
 which blocks a merge only if a ruleset marks it required.
 
