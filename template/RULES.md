@@ -47,8 +47,8 @@ its own PR. Review runs as a separate identity and a separate read-only session.
 would enforce it, but not while every agent pushes as the owner's account: GitHub sees one
 person. That needs a separate reviewer account or bot. See `docs/` "Independent review".
 
-**R7. Commits and PRs follow the format.** Conventional Commits, subject at most 72 characters,
-no closing keywords (`closes`, `fixes`, `resolves`). Link issues with `Refs: #12`.
+**R7. Commits and PRs follow the format.** Conventional Commits with a lowercase type and scope
+(`fix(api): ...`), subject at most 72 characters, no closing keywords (`closes`, `fixes`, `resolves`). Link issues with `Refs: #12`.
 Issues close only when a human confirms acceptance.
 *Enforced by:* `.githooks/commit-msg` (skippable with `--no-verify`) and the `pr-checks` workflow,
 which blocks a merge only if a ruleset marks it required.

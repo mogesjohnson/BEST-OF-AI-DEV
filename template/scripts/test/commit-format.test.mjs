@@ -35,3 +35,24 @@ test('ignores git comments, CRLF and the scissors section', () => {
   assert.deepEqual(checkMessage(raw), []);
   assert.deepEqual(checkMessage('# only comments\n\n'), ['empty commit message']);
 });
+
+test('strips a leading BOM from PowerShell-written messages', () => {
+  assert.deepEqual(checkMessage('\uFEFFfeat: a\r\n\r\nbody\r\n'), []);
+});
+
+test('keeps "#12 ..." lines that git commit -m would keep', () => {
+  const problems = checkMessage('#12 add thing');
+  assert.notDeepEqual(problems, ['empty commit message']);
+  assert.match(problems.join(), /type\(scope\)/);
+  assert.deepEqual(checkMessage('feat: a\n\n#12 is the issue'), [], 'a "#12" body line is content');
+});
+
+test('honors a custom comment character', () => {
+  assert.deepEqual(checkMessage('; Please enter the message\nfeat: a', ';'), []);
+  assert.deepEqual(checkMessage('# not a comment here\n', ';').length, 1);
+});
+
+test('names lowercase as the fix for uppercase type or scope', () => {
+  assert.match(checkSubject('Fix(API): handle 429').join(), /lowercase/);
+  assert.match(checkSubject('feat(UI): add x').join(), /lowercase/);
+});
