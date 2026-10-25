@@ -26,7 +26,7 @@ template's copies with this repo's slots filled in.
 Start a new repo from `template/`, or move an existing one with the
 [shared migration steps](docs/migrations/README.md). Then fill the `REPO-SPECIFIC` slots.
 
-On Windows (PowerShell 5.1, Node 20 or newer), check the hooks and checks from a fresh clone:
+On Windows (PowerShell 5.1, Node 20.9 or newer, which the site also needs), check the hooks and checks from a fresh clone:
 
 ```powershell
 gh repo clone mogesjohnson/BEST-OF-AI-DEV
@@ -35,8 +35,8 @@ npm install
 powershell -ExecutionPolicy Bypass -File .\template\scripts\test-windows.ps1
 ```
 
-`npm install` runs `prepare`, which points `core.hooksPath` at the repo's hooks. No other tools
-are needed. Lefthook and gitleaks are optional extras.
+`npm install` runs `prepare`, which points `core.hooksPath` at the repo's hooks. It needs only git
+and Node (`gh` is just for the clone). Lefthook and gitleaks are optional extras.
 
 ## Run the docs site
 
