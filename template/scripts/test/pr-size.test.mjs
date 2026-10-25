@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { exceptionReason, globToRegExp, isExcluded, parseNumstat, summarize, tighten } from '../check/pr-size.mjs';
+import { exceptionReason, globToRegExp, isExcluded, parseNumstat, pushedTips, summarize, tighten } from '../check/pr-size.mjs';
 
 test('globs match the way the patterns read', () => {
   assert.ok(globToRegExp('**/yarn.lock').test('yarn.lock'));
@@ -69,4 +69,16 @@ test('SIZE_EXCEPTION is ignored in CI', () => {
   assert.ok(exceptionReason({ SIZE_EXCEPTION: reason }));
   assert.equal(exceptionReason({ SIZE_EXCEPTION: reason, CI: 'true' }), null);
   assert.equal(exceptionReason({ SIZE_EXCEPTION: reason, GITHUB_ACTIONS: 'true' }), null);
+});
+
+test('pushedTips keeps pushed branches and skips deletes and tags', () => {
+  const z = '0'.repeat(40);
+  const input = [
+    `refs/heads/feat/a ${'a'.repeat(40)} refs/heads/feat/a ${z}`,
+    `refs/heads/old ${z} refs/heads/old ${'b'.repeat(40)}`,
+    `refs/tags/v1 ${'c'.repeat(40)} refs/tags/v1 ${z}`,
+    '',
+  ].join('\r\n');
+  assert.deepEqual(pushedTips(input), [{ ref: 'feat/a', sha: 'a'.repeat(40) }]);
+  assert.deepEqual(pushedTips(''), []);
 });

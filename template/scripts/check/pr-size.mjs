@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // BEST-OF-AI-DEV template v1. PR size gate (RULES.md R8). Counts changed lines, never commits.
 //
-//   node scripts/check/pr-size.mjs [--base <ref>]     default base: origin/main
+//   node scripts/check/pr-size.mjs [--base <ref>] [--stdin-refs]   default base: origin/main
+//
+// --stdin-refs reads git's pre-push input and checks each pushed branch instead of HEAD.
 //
 // Counts added + deleted lines in `git diff BASE...HEAD`, so later commits that undo earlier
 // ones do not inflate the total. Excludes lockfiles, generated files and, in a repo with a
@@ -11,6 +13,7 @@
 // PR_SIZE_LIMIT and PR_SIZE_TARGET can lower the numbers for one run, never raise them.
 // Exit 0 pass, 1 over the limit, 2 usage or git error.
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -101,24 +104,41 @@ function mirrorCheck(head) {
   return (path) => !path.startsWith(`${MIRROR_DIR}/`) && blobs.has(`${MIRROR_DIR}/${path}`) && blobs.get(path) === blobs.get(`${MIRROR_DIR}/${path}`);
 }
 
-function main(argv) {
-  const i = argv.indexOf('--base');
-  const base = i === -1 ? process.env.BASE_SHA || 'origin/main' : argv[i + 1];
-  if (!base || base.startsWith('--')) {
-    console.error('pr-size: usage: node scripts/check/pr-size.mjs [--base <ref>]');
-    return 2;
+function resolves(ref) {
+  try {
+    execFileSync('git', ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
   }
-  const head = process.env.HEAD_SHA || 'HEAD';
+}
+
+/**
+ * Parses pre-push stdin ("<local ref> <local sha> <remote ref> <remote sha>" per line) into the
+ * branch tips being pushed. Deletions and tags are skipped.
+ */
+export function pushedTips(input) {
+  const tips = [];
+  for (const line of input.split(/\r?\n/)) {
+    const [localRef, localSha] = line.trim().split(/\s+/);
+    if (!localSha || /^0+$/.test(localSha) || localRef.startsWith('refs/tags/')) continue;
+    tips.push({ ref: localRef.replace(/^refs\/heads\//, ''), sha: localSha });
+  }
+  return tips;
+}
+
+function checkRange(base, head, label) {
   let rows;
   try {
     rows = parseNumstat(git(['diff', '--numstat', '-z', '-M', `${base}...${head}`]));
   } catch (err) {
-    console.error(`pr-size: cannot diff ${base}...${head}. Fetch the base branch first. (${err.message.split('\n')[0]})`);
+    console.error(`pr-size: cannot diff ${base}...${label}. (${err.message.split('\n')[0]})`);
     return 2;
   }
   const s = summarize(rows, mirrorCheck(head));
   const verdict = s.total > LIMIT ? 'fail' : s.total > TARGET ? 'pass (over the target; consider splitting)' : 'pass';
-  console.log(`pr-size: ${s.total} changed lines (+${s.added}/-${s.deleted}) in ${s.files} files; ${s.skipped.length} excluded. Limit ${LIMIT}, target ${TARGET}: ${verdict}`);
+  const where = label === 'HEAD' ? '' : ` [${label}]`;
+  console.log(`pr-size${where}: ${s.total} changed lines (+${s.added}/-${s.deleted}) in ${s.files} files; ${s.skipped.length} excluded. Limit ${LIMIT}, target ${TARGET}: ${verdict}`);
   if (s.binaries.length) console.log(`pr-size: binary files are not line-counted; justify them in the PR: ${s.binaries.map((b) => b.path).join(', ')}`);
   if (s.total <= LIMIT) return 0;
   const reason = exceptionReason(process.env);
@@ -128,6 +148,28 @@ function main(argv) {
   }
   console.error('pr-size: split this into stacked PRs, or add the size-exception label and a "Size exception: <reason>" line.');
   return 1;
+}
+
+function main(argv) {
+  const i = argv.indexOf('--base');
+  const base = i === -1 ? process.env.BASE_SHA || 'origin/main' : argv[i + 1];
+  if (!base || base.startsWith('--')) {
+    console.error('pr-size: usage: node scripts/check/pr-size.mjs [--base <ref>] [--stdin-refs]');
+    return 2;
+  }
+  if (!resolves(base)) {
+    // Usually the first push of a new repo. One line, and the hook reports it as blocked.
+    console.error(`pr-size: ${base} does not exist yet, so there is nothing to compare against. Run "git fetch" if it should.`);
+    return 2;
+  }
+  // --stdin-refs: the pre-push hook passes the refs being pushed, which need not be HEAD.
+  let tips = [];
+  if (argv.includes('--stdin-refs') && !process.stdin.isTTY) {
+    try { tips = pushedTips(readFileSync(0, 'utf8')); } catch { tips = []; }
+  }
+  if (tips.length === 0) tips = [{ ref: 'HEAD', sha: process.env.HEAD_SHA || 'HEAD' }];
+  const codes = tips.map((t) => checkRange(base, t.sha, t.ref));
+  return codes.includes(1) ? 1 : codes.includes(2) ? 2 : 0;
 }
 
 // Case-insensitive compare: on Windows the drive letter case can differ.
