@@ -17,8 +17,9 @@ const SCISSORS = /^# -+ >8 -+$/;
  * Removes git comment lines and everything below the scissors line.
  * Git's own comments are "# text" or a bare "#", so only those are dropped. A line like
  * "#12 add x" (from `git commit -m`, which keeps it) stays and fails the format check
- * with a real reason instead of vanishing. A leading BOM (Windows PowerShell 5.1
- * `Out-File` and some editors write one) is removed.
+ * with a real reason instead of vanishing. A leading BOM is removed: Windows
+ * PowerShell 5.1 writes one with `-Encoding UTF8` (`Set-Content`, `Out-File`), and so do
+ * some editors.
  */
 export function cleanMessage(raw, commentChar = '#') {
   const lines = [];
