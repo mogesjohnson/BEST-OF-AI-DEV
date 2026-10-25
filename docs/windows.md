@@ -10,7 +10,7 @@ Agents write PowerShell 7 by habit. Every `.ps1` in `scripts/` must run in 5.1.
 | Script | What it does | Default |
 | --- | --- | --- |
 | `scripts/test-windows.ps1` | Self-test: hooks, commit rules, pr-size and both cleanup scripts, in a temp repo | read-only |
-| `scripts/cleanup-worktrees.ps1` | Lists merged, stale or missing worktrees; `-Apply` removes them | dry run |
+| `scripts/cleanup-worktrees.ps1` | Lists merged, stale or missing worktrees; `-Apply` removes them. Keeps any with ignored files such as `.env` unless you add `-Force` | dry run |
 | `scripts/mcp-doctor.ps1` | Lists MCP servers whose agent is gone; `-Apply` stops them | dry run |
 
 Run them from the repo root:
