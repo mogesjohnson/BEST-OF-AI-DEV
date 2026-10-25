@@ -10,9 +10,13 @@ alongside it. None of them adds rules of its own.
 | --- | --- | --- |
 | Codex | `AGENTS.md` | `.codex/config.toml`, used only after you trust the project |
 | Claude Code | `CLAUDE.md`, which imports `@AGENTS.md` | `.claude/settings.json`; personal overrides in `.claude/settings.local.json` (git-ignored) |
-| Grok Build | `AGENTS.md` and `CLAUDE.md` in the same folder | its own settings. TODO(verify): a project-level permissions file |
-| Gemini CLI, Antigravity | `GEMINI.md`, which imports `@AGENTS.md` | `.gemini/settings.json`. TODO(verify): Antigravity resolves `@` imports the way Gemini CLI does |
+| Grok Build | `AGENTS.md` and `CLAUDE.md` in the same folder, both loaded. Its docs do not mention `@` imports, so keep rules out of `CLAUDE.md` | `.claude/settings.json` (read and translated), or `.grok/config.toml` `[permission]`. Both need folder trust |
+| Gemini CLI | `GEMINI.md`, which imports `@AGENTS.md` | `.gemini/settings.json` |
+| Antigravity | `AGENTS.md` and `GEMINI.md`, both loaded. `@AGENTS.md` here is a path reference, not an import, so nothing loads twice | its own settings; this template ships none |
 | Cursor | `AGENTS.md` | the editor's own settings |
+
+Checked against the vendors' public docs on 2026-10-25: Grok Build's user guide (project rules,
+permissions) and Antigravity's rules page. Re-check when you upgrade; these move fast.
 
 ## What the committed configs do
 
@@ -25,6 +29,9 @@ alongside it. None of them adds rules of its own.
   does not matter. `scripts/test/agent-config.test.mjs` runs a table of commands through a model
   of the documented matcher. Change a rule and the table tells you what moved.
   Deny and ask rules apply as soon as the file is in the repo. Allow rules wait until you trust the folder.
+- **Grok Build** reads the same `.claude/settings.json`, so one file covers both. Its matcher also
+  checks every segment of a chained command, and it is case-sensitive, which is why both
+  `core.hooksPath` spellings are listed. It ignores the whole file until you trust the folder.
 - **Codex** runs in `workspace-write`: no writes outside the repo and no network from
   commands. Web search uses the cached index. Variables named like keys, secrets or tokens are
   stripped from the command environment; Codex's default keeps them.
