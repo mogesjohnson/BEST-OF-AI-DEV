@@ -58,7 +58,9 @@ export function parseNumstat(out) {
 export function exceptionReason(env) {
   if (env.SIZE_EXCEPTION && env.SIZE_EXCEPTION.trim().length >= 10) return env.SIZE_EXCEPTION.trim();
   const labelled = (env.PR_LABELS || '').split(',').map((s) => s.trim()).includes('size-exception');
-  const m = /^Size exception:\s*(.{10,})$/im.exec(env.PR_BODY || '');
+  // Same line only, and not inside an HTML comment (the PR template's example is one).
+  const body = (env.PR_BODY || '').replace(/<!--[\s\S]*?(-->|$)/g, '');
+  const m = /^Size exception:[ \t]*(\S.{9,})$/im.exec(body);
   return labelled && m ? m[1].trim() : null;
 }
 

@@ -47,3 +47,11 @@ test('exceptions need the label and a real reason', () => {
   assert.equal(exceptionReason({ PR_LABELS: 'size-exception', PR_BODY: 'Size exception: big' }), null, 'reason too short');
   assert.ok(exceptionReason({ SIZE_EXCEPTION: 'one-time bootstrap of the repo' }));
 });
+
+test('the exception reason must be on the line itself, outside comments', () => {
+  const env = (PR_BODY) => ({ PR_LABELS: 'size-exception', PR_BODY });
+  assert.equal(exceptionReason(env('Size exception:\nregenerated the vendored schema')), null, 'next line');
+  assert.equal(exceptionReason(env('<!-- Size exception: regenerated the vendored schema -->')), null, 'comment');
+  assert.equal(exceptionReason(env('<!--\nSize exception: regenerated the vendored schema\n-->')), null, 'block comment');
+  assert.ok(exceptionReason(env('Size exception: regenerated the vendored schema')));
+});
