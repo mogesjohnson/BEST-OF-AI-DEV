@@ -9,6 +9,7 @@
 // Repo-specific text is ignored in two forms, in any comment syntax:
 //   block: a line containing "REPO-SPECIFIC:" through a line containing "/REPO-SPECIFIC"
 //   tail:  a line containing "REPO-SPECIFIC-BELOW" and everything after it
+// Seeded files (SEEDED below, e.g. package.json) must exist but are not compared.
 // Exit 0 when in sync, 1 on drift, 2 on usage errors.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep, resolve } from 'node:path';
