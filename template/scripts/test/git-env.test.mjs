@@ -32,7 +32,7 @@ test('the hooks test leaves the repo named by GIT_DIR alone', () => {
     const hooksTest = fileURLToPath(new URL('./hooks.test.mjs', import.meta.url));
     const r = spawnSync(process.execPath, ['--test', hooksTest], { encoding: 'utf8', env });
     assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.match(r.stdout, /# pass 1/, 'the nested hooks test did not run');
+    assert.match(r.stdout, /# pass [1-9]/, 'the nested hooks tests did not run');
     assert.equal(git('config', 'user.name').stdout.trim(), 'owner', 'user.name was overwritten');
     assert.notEqual(git('config', 'core.bare').stdout.trim(), 'true', 'core.bare was set');
     assert.equal(git('symbolic-ref', 'HEAD').stdout.trim(), 'refs/heads/main', 'HEAD was moved');
