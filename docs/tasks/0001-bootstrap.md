@@ -13,7 +13,7 @@ exist only as prose. There is no single place to start a new repo from.
 
 ## Outcome
 
-A private template repo that a new project copies in one step. It holds the rules, the checks
+A public template repo that a new project copies in one step. It holds the rules, the checks
 that enforce them, a docs site explaining why each one matters, and migration notes per repo.
 
 ## Acceptance criteria
@@ -24,7 +24,7 @@ that enforce them, a docs site explaining why each one matters, and migration no
 - [ ] `template/scripts/test-windows.ps1` runs under Windows PowerShell 5.1 and prints PASS/FAIL per check.
 - [ ] The docs site in `site/` builds locally with `npm run build`, reusing shadow-docs' styling.
 - [ ] README.md about the owner uses only verified facts; everything else is `TODO(verify)`.
-- [ ] Migration notes list per-repo changes without editing those repos.
+- [ ] Migration notes list per-repo changes without editing those repos (generic for private repos, R22).
 
 ## Scope
 

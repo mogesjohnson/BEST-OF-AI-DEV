@@ -25,8 +25,8 @@ test('catches common token shapes', () => {
 
 test('catches personal paths but not placeholders', () => {
   const users = 'Users';
-  assert.deepEqual(scan(`cd C:\\${users}\\Moges Johnson\\code`), ['personal Windows path']);
-  assert.deepEqual(scan(`see /${users}/moges/dev/x`), ['personal home path']);
+  assert.deepEqual(scan(`cd C:\\${users}\\Jane Doe\\code`), ['personal Windows path']);
+  assert.deepEqual(scan(`see /${users}/jane/dev/x`), ['personal home path']);
   assert.deepEqual(scan('cd C:\\Users\\<you>\\code'), []);
   assert.deepEqual(scan('personal paths (`C:\\Users\\...`)'), []);
   assert.deepEqual(scan('runs-on /home/runner/work'), []);

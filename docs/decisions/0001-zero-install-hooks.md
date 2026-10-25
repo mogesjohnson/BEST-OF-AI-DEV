@@ -7,7 +7,7 @@ Deciders: Grok Bot (proposed); Moges Johnson to accept or reject
 ## Context
 
 Hooks that need a separate binary install are skipped on fresh clones and on agent sandboxes,
-which is where they matter most. The owner's shadow-docs, shadow-army and payment-splitter repos
+which is where they matter most. The owner's public shadow-docs and shadow-army repos (and one private repo)
 already use `.githooks/` with `scripts/setup-hooks.mjs` and `core.hooksPath`. The agent box
 cannot download executables, and lefthook refuses to install while `core.hooksPath` is set.
 
