@@ -71,6 +71,12 @@
 .bd-root .bd-prose a:hover {
   text-decoration: underline;
 }
+/* Heading anchors are "#" marks, not links in the text: keep them faint. */
+.bd-root .bd-prose .bd-anchor,
+.bd-root .bd-prose .bd-anchor:hover {
+  color: var(--bd-faint);
+  text-decoration: none;
+}
 .bd-prose code {
   font-family: var(--bd-mono);
   font-size: 0.88em;
