@@ -74,6 +74,44 @@ test('the revert exemption needs the title, the exact body and only revert commi
   assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [sha256], 'owner/repo'), true, 'SHA-256 repos too');
   const short = { sha, message: 'Revert "feat: add x"\n\nThis reverts commit abc1234.\n' };
   assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [short], 'owner/repo'), false, 'a short sha is hand-written');
+  const merge = { sha, message: `Revert "Merge pull request #12"\n\nThis reverts commit ${sha}, reversing\nchanges made to ${'c'.repeat(40)}.\n` };
+  assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [merge], 'owner/repo'), true, 'a reverted merge commit');
+  const seen = [];
+  const verify = (c, s) => (seen.push(s), false);
+  assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [rev], 'owner/repo', verify), false, 'git must confirm it');
+  assert.deepEqual(seen, [sha]);
+});
+
+test('the revert exemption checks the reverted sha and the diff against git', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'bod-revert-merge-'));
+  try {
+    const g = (...a) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid', ...a], { cwd: dir, env: withoutGitEnv(), encoding: 'utf8' }).trim();
+    g('init', '-q', '-b', 'main');
+    g('commit', '-q', '--allow-empty', '-m', 'chore: start', '-m', 'Refs: #1');
+    g('switch', '-q', '-c', 'feat');
+    writeFileSync(join(dir, 'x.txt'), 'x');
+    g('add', 'x.txt');
+    g('commit', '-q', '-m', 'feat: add x', '-m', 'Refs: #1');
+    g('switch', '-q', 'main');
+    g('merge', '-q', '--no-ff', '-m', 'Merge pull request #12 from owner/feat', 'feat');
+    const merged = g('rev-parse', 'HEAD');
+    const run = (base) => spawnSync(process.execPath, [script, '--base', base], { cwd: dir, encoding: 'utf8', env: { ...withoutGitEnv(), PR_TITLE: 'Revert "Merge pull request #12 from owner/feat"', PR_BODY: 'Reverts owner/repo#13', GITHUB_REPOSITORY: 'owner/repo' } });
+    g('switch', '-q', '-c', 'real', merged);
+    g('revert', '--no-edit', '-m', '1', merged);
+    const real = run(merged);
+    assert.equal(real.status, 0, `a real revert of a merged PR: ${real.stderr}\n${g('log', '-1', '--format=%B')}`);
+    const forge = (name, file, target) => {
+      g('switch', '-q', '-c', name, merged);
+      writeFileSync(join(dir, file), 'y');
+      g('add', file);
+      g('commit', '-q', '-m', 'Revert "Merge pull request #12 from owner/feat"', '-m', `This reverts commit ${target}.`);
+      return run(merged);
+    };
+    assert.equal(forge('other-diff', 'y.txt', merged).status, 1, 'the diff must undo the named commit');
+    assert.equal(forge('no-such-sha', 'z.txt', 'c'.repeat(40)).status, 1, 'the named commit must be on the base');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('a real git revert passes the gate with the generated body', () => {

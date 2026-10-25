@@ -6,8 +6,9 @@
 // Skipped for Dependabot (PR_AUTHOR dependabot[bot]): its titles and bodies are generated.
 // A GitHub revert PR skips the body check, but only when all three hold: the title is
 // 'Revert "..."', the whole body is "Reverts <this repo>#N", and every commit is a git
-// revert ('Revert "..."' with "This reverts commit <sha>."). A hand-written PR that only
-// copies the title and body still gets the full check.
+// revert ('Revert "..."' with "This reverts commit <sha>."). The named sha must be on the
+// base branch, and the revert's diff must be the exact inverse of that commit's diff. A
+// hand-written PR that only copies the title, body and message still gets the full check.
 // Commits are checked strictly: fixup!, squash! and "Merge ..." subjects fail here.
 //
 // CI passes the title and body through env vars, never by pasting them into a shell line.
@@ -24,14 +25,37 @@ const EMPTY_STATUS = /^\s*[-*]\s*(pass|fail|blocked|not_run)\s*:?\s*$/m;
 const NEEDS_TEXT = ['Summary', 'Size', 'Risks and follow-ups'];
 export const DEPENDABOT = 'dependabot[bot]';
 export const REVERT_BODY = /^Reverts ([\w.-]+\/[\w.-]+)#\d+$/;
-export const REVERT_COMMIT = /^Revert "[^\n]*"\n(?:[\s\S]*\n)?This reverts commit (?:[0-9a-f]{64}|[0-9a-f]{40})\./;
+// A reverted merge commit adds ", reversing changes made to <first parent>".
+export const REVERT_COMMIT = /^Revert "[^\n]*"\n(?:[\s\S]*\n)?This reverts commit ([0-9a-f]{64}|[0-9a-f]{40})(?:, reversing\s+changes made to (?:[0-9a-f]{64}|[0-9a-f]{40}))?\./;
 
-/** True only for a PR GitHub's Revert button could have made. */
-export function isRevertPr(title, body, commits, repo) {
+/**
+ * True only for a PR GitHub's Revert button could have made. `verify(commit, revertedSha)`
+ * checks the commit against git (see revertsBaseCommit); main() always passes it.
+ */
+export function isRevertPr(title, body, commits, repo, verify = () => true) {
   const m = REVERT_BODY.exec((body || '').replace(/\r/g, '').trim());
   if (title === undefined || !PR_EXEMPT.test(title) || !m) return false;
   if (repo && m[1].toLowerCase() !== repo.toLowerCase()) return false;
-  return commits.length > 0 && commits.every((c) => REVERT_COMMIT.test(c.message.replace(/\r/g, '')));
+  return commits.length > 0 && commits.every((c) => {
+    const r = REVERT_COMMIT.exec(c.message.replace(/\r/g, ''));
+    return Boolean(r) && verify(c, r[1]);
+  });
+}
+
+function gitOut(args) {
+  try {
+    return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 << 20 });
+  } catch {
+    return null;
+  }
+}
+
+/** The reverted commit is on `base`, and `commit` undoes exactly its diff (first parent). */
+export function revertsBaseCommit(base, commit, reverted) {
+  if (gitOut(['merge-base', '--is-ancestor', reverted, base]) === null) return false;
+  const undo = gitOut(['diff', '--full-index', '--binary', reverted, `${reverted}^`]);
+  const done = gitOut(['diff', '--full-index', '--binary', `${commit.sha}^`, commit.sha]);
+  return undo !== null && undo !== '' && undo === done;
 }
 
 function section(text, name) {
@@ -86,7 +110,7 @@ function main(argv) {
     console.error(`pr-format: cannot read commits since ${base}. Fetch it first. (${err.message.split('\n')[0]})`);
     return 2;
   }
-  const revert = isRevertPr(title, body, commits, process.env.GITHUB_REPOSITORY);
+  const revert = isRevertPr(title, body, commits, process.env.GITHUB_REPOSITORY, (c, sha) => revertsBaseCommit(base, c, sha));
   if (body !== undefined && !revert) problems.push(...checkBody(body));
   for (const c of commits) problems.push(...checkMessage(c.message, '#', PR_EXEMPT).map((p) => `commit ${c.sha.slice(0, 7)}: ${p}`));
   if (problems.length) {

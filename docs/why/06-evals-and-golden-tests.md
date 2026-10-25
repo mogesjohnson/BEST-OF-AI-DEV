@@ -28,7 +28,9 @@ An agent reads the output, sees what it expected, and moves on.
 - **Outcome over output.** The worktree cleanup self-test checks that `.env` still exists on
   disk after `-Apply`, not only that the log says "keep".
 - **Real fixtures for gate exemptions.** The revert exemption is tested with a real
-  `git revert` in a scratch repo, so the test uses the message git actually writes.
+  `git revert` in a scratch repo, so the test uses the message git actually writes. A
+  forged revert (a commit that copies the message but changes something else, or names a
+  commit that isn't on the base) has to fail.
 - All of this runs in `npm test`, locally and in CI, in a few seconds. A slow suite gets
   skipped.
 
