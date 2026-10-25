@@ -13,7 +13,8 @@ const root = fileURLToPath(new URL('../..', import.meta.url));
 
 // withoutGitEnv: when this runs from a pre-push hook, GIT_DIR points at the real repo.
 function run(cwd, cmd, args, env = {}) {
-  return spawnSync(cmd, args, { cwd, encoding: 'utf8', env: { ...withoutGitEnv(), ...env } });
+  // CI is cleared because setup-hooks.mjs skips itself in CI.
+  return spawnSync(cmd, args, { cwd, encoding: 'utf8', env: { ...withoutGitEnv(), CI: '', ...env } });
 }
 
 test('hooks and size gate work in a fresh repo with a spaced path', () => {
@@ -53,6 +54,31 @@ test('hooks and size gate work in a fresh repo with a spaced path', () => {
     assert.equal(size({ SIZE_EXCEPTION: 'test of the exception path' }).status, 0);
     const usage = run(dir, process.execPath, ['scripts/check/pr-size.mjs', '--base']);
     assert.equal(usage.status, 2, 'a missing --base value is a usage error, not a git error');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('setup-hooks fails loudly but keeps .githooks when lefthook is missing', (t) => {
+  if (spawnSync('lefthook', ['version'], { stdio: 'ignore', shell: process.platform === 'win32' }).status === 0) {
+    t.skip('lefthook is installed here');
+    return;
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'bod lefthook '));
+  try {
+    cpSync(join(root, '.githooks'), join(dir, '.githooks'), { recursive: true });
+    cpSync(join(root, 'scripts'), join(dir, 'scripts'), { recursive: true });
+    cpSync(join(root, 'optional', 'lefthook.yml'), join(dir, 'lefthook.yml'));
+    run(dir, 'git', ['init', '-q', '-b', 'main']);
+    const r = run(dir, process.execPath, ['scripts/setup-hooks.mjs']);
+    assert.equal(r.status, 1, 'a missing lefthook must not pass silently');
+    assert.match(r.stderr, /lefthook is not installed/);
+    assert.match(r.stderr, /R3/);
+    assert.doesNotMatch(r.stderr + r.stdout, /npm i -D lefthook/);
+    assert.equal(run(dir, 'git', ['config', 'core.hooksPath']).stdout.trim(), '.githooks', 'hooks stay active');
+    const ci = run(dir, process.execPath, ['scripts/setup-hooks.mjs'], { CI: 'true' });
+    assert.equal(ci.status, 0);
+    assert.match(ci.stdout, /CI is set, skipped/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
