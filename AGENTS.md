@@ -8,7 +8,7 @@
 
 <!-- REPO-SPECIFIC: one or two sentences. What it does, who uses it, current version. -->
 BEST-OF-AI-DEV is Moges Johnson's template repo for AI-first development: drop-in agent rules
-and checks in `template/`, the reasoning in `practices/`, and a docs site in `docs/`. It follows its own template.
+and checks in `template/`, the reasoning in `practices/`, and a docs site in `site/`. It follows its own template.
 <!-- /REPO-SPECIFIC -->
 
 ## Commands
@@ -28,6 +28,7 @@ Run these from the repo root. They are the only definition of "checks pass".
 - `template/`: the files a new repo copies. Root files mirror them; `template-sync` checks that.
 - `practices/`: what to keep and what to change, each with its reason and source repo.
 - `template/scripts/`: the checks and hooks. This repo runs them in place; there is no root copy.
+- `docs/tasks/`, `docs/decisions/`: this repo's task specs and ADRs; `0000-template.md` is the blank form.
 <!-- /REPO-SPECIFIC -->
 
 ## How work flows
