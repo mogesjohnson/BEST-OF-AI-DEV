@@ -20,7 +20,8 @@ and money. It also teaches the agent to wait on CI rather than run the checks it
   because it checks the title, body, commits and size, which every PR has.
 - **Cancel stale runs.** Every workflow has a `concurrency` group with
   `cancel-in-progress: true`, so a new push stops the run for the old one.
-- **Cap every job.** `timeout-minutes` is 5 for the gates and 10 for tests. A hung job fails
+- **Cap every job.** `timeout-minutes` is 5 for the gates, and 10 for the tests and the
+  site build. A hung job fails
   fast and doesn't burn the default six hours.
 - **Required checks must always run.** Only `pr-checks` should be required. A path-filtered
   workflow that's required leaves skipped PRs waiting forever, which is why `ci` and `site`
