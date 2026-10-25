@@ -1,4 +1,4 @@
-// End-to-end: a throwaway repo (with a space in its path, like C:\Users\Moges Johnson)
+// End-to-end: a throwaway repo (with a space in its path, like a Windows user folder)
 // gets the hooks, rejects a bad commit, accepts a good one, and the size gate counts lines.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,17 +26,24 @@ test('hooks and size gate work in a fresh repo with a spaced path', () => {
     assert.equal(run(dir, process.execPath, ['scripts/setup-hooks.mjs']).status, 0);
     assert.equal(g('config', 'core.hooksPath').stdout.trim(), '.githooks');
 
+    writeFileSync(join(dir, 'leak.txt'), 'key=' + 'AKIA' + 'Q'.repeat(16) + '\n');
     g('add', '-A');
+    const leak = run(dir, 'git', ['commit', '-q', '-m', 'chore: add scripts'], { SECRETS_SKIP_GITLEAKS: '1' });
+    assert.notEqual(leak.status, 0, 'a staged secret must block the commit');
+    assert.match(leak.stderr, /leak\.txt:1: AWS access key/);
+    g('rm', '-q', '-f', 'leak.txt');
     const bad = g('commit', '-q', '-m', 'Added the scripts.');
     assert.notEqual(bad.status, 0, 'bad subject must be rejected');
     assert.match(bad.stderr, /commit-msg: rejected/);
-    assert.equal(g('commit', '-q', '-m', 'chore: add scripts').status, 0);
+    const good = g('commit', '-q', '-m', 'chore: add scripts');
+    assert.equal(good.status, 0, good.stderr);
 
     g('switch', '-q', '-c', 'feat');
     writeFileSync(join(dir, 'a.txt'), 'x\n'.repeat(700));
     writeFileSync(join(dir, 'package-lock.json'), '{}\n'.repeat(5000));
     g('add', '-A');
-    assert.equal(g('commit', '-q', '-m', 'feat: add a big file').status, 0);
+    const big = g('commit', '-q', '-m', 'feat: add a big file');
+    assert.equal(big.status, 0, big.stderr);
     const size = (env) => run(dir, process.execPath, ['scripts/check/pr-size.mjs', '--base', 'main'], env);
     const over = size({ SIZE_EXCEPTION: '' });
     assert.equal(over.status, 1);
