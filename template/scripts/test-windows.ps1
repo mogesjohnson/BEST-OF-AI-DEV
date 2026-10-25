@@ -71,6 +71,8 @@ function Get-Last {
 # Git exports GIT_DIR and GIT_INDEX_FILE to hooks. If this runs from one, every git call
 # below would hit the real repo instead of the temp one. Drop them for this process.
 Get-ChildItem -Path 'Env:' | Where-Object { $_.Name -like 'GIT_*' } | ForEach-Object { Remove-Item -LiteralPath ('Env:\' + $_.Name) }
+# setup-hooks.mjs skips itself when CI is set, which would fail the hooksPath check.
+if (Test-Path -LiteralPath 'Env:\CI') { Remove-Item -LiteralPath 'Env:\CI' }
 
 $scriptsDir = $PSScriptRoot
 $parentDir = Split-Path -Parent $scriptsDir
