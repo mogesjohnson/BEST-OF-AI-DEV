@@ -28,7 +28,8 @@ export const PATTERNS = [
   ['personal Windows path', /\b[A-Za-z]:[\\/]+Users[\\/]+(?!(Public|Default|<|\.\.\.|…|%))[^\\/\s"'`<>]+/i],
   ['personal home path', /(?<![\w.])\/(Users|home)\/(?!(runner|node|user|<|\.\.\.|…|\$))[a-z][\w.-]+\//],
 ];
-export const BAD_FILES = [/(^|\/)\.env(\.(?!example$|sample$|template$)[\w.-]+)?$/, /\.(pem|p12|pfx|key)$/, /(^|\/)id_(rsa|ed25519|ecdsa)$/];
+// Case-insensitive: Windows and macOS treat .ENV and cert.P12 as the same files.
+export const BAD_FILES = [/(^|\/)\.env(\.(?!example$|sample$|template$)[\w.-]+)?$/i, /\.(pem|p12|pfx|key)$/i, /(^|\/)id_(rsa|ed25519|ecdsa)$/i];
 const ALLOW = /gitleaks:allow/;
 
 /** Returns findings for one file's lines: { file, line, rule }. Never returns the secret itself. */

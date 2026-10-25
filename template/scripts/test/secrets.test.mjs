@@ -38,6 +38,9 @@ test('flags files that should never be committed', () => {
   assert.equal(scanLines('apps/api/.env.local', []).length, 1);
   assert.equal(scanLines('certs/server.pem', []).length, 1);
   assert.equal(scanLines('.env.example', []).length, 0);
+  assert.equal(scanLines('Certs/Server.P12', []).length, 1, 'case-insensitive');
+  assert.equal(scanLines('.ENV', []).length, 1, 'case-insensitive');
+  assert.equal(scanLines('.env.Example', []).length, 0);
 });
 
 test('gitleaks:allow skips a known test value', () => {
