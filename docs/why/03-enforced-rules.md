@@ -27,9 +27,9 @@ to tools where it can:
 | PR size | `pr-size.mjs` on pre-push and in `pr-checks` |
 | No secrets or personal paths | `secrets.mjs` on pre-commit and in CI, gitleaks when installed |
 | No force-push or `--no-verify` from an agent | deny rules in `.claude/settings.json` |
-| Template and root in sync | `template-sync.mjs` in `npm test` |
+| No drift from the template | `template-sync.mjs` in `pr-checks` (and in `npm test` here) |
 
-The hooks need no install step beyond `node scripts/setup-hooks.mjs`, which sets
+The hooks need no extra install. `npm install` runs `scripts/setup-hooks.mjs`, which sets
 `core.hooksPath`. Lefthook is optional.
 
 ## Evidence

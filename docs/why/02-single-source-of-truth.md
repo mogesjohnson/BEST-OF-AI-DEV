@@ -26,8 +26,9 @@ Codex next to Claude.
   one line, `@AGENTS.md`, plus a comment saying not to add rules there.
 - One `.claude/settings.json` covers both Claude Code and Grok Build, which reads and
   translates it. There is no second permissions file to keep in step.
-- `template-sync.mjs` checks that this repo's own root files match the template outside the
-  `REPO-SPECIFIC` blocks, so the template cannot drift from what the repo actually uses.
+- `template-sync.mjs` checks that a repo's files match the template outside the
+  `REPO-SPECIFIC` blocks. It runs on this repo too, so the template cannot drift from what
+  the repo actually uses.
 
 ## Evidence
 
