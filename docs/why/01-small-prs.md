@@ -20,11 +20,13 @@ renamed helper and some reformatting. A reviewer can't tell which lines matter.
 - Every PR is one self-contained change, with its tests.
 - [`scripts/check/pr-size.mjs`](https://github.com/mogesjohnson/BEST-OF-AI-DEV/blob/main/template/scripts/check/pr-size.mjs)
   counts added plus deleted lines against the base branch. It warns at 400 and fails at 600.
-  Lockfiles and other generated files don't count.
+  Lockfiles, minified files, source maps and `generated/` folders don't count.
 - It counts lines, never commits. Many small commits inside one PR are fine and make review
   easier.
-- The limits can be lowered per repo with environment variables, never raised. A bigger change
-  gets split, usually into "refactor first, then the change" or one PR per layer.
+- Environment variables can lower the limits for one repo, never raise them. A bigger change
+  gets split, usually into "refactor first, then the change" or one PR per layer. The only way
+  past 600 is a `size-exception` label plus a written reason in the PR body, so the exception
+  is visible to the reviewer.
 
 ## Evidence
 
@@ -35,8 +37,9 @@ renamed helper and some reformatting. A reviewer can't tell which lines matter.
   once a review went past 200 to 400 lines, and that review quality dropped after about an
   hour. Its advice is 100 to 300 lines per sitting.
   ([case study, PDF](https://static1.smartbear.co/support/media/resources/cc/book/code-review-cisco-case-study.pdf))
-- This repo was built under the same gate: every PR is under 600 lines, and each one was
-  reviewed and fixed in follow-up commits before merging. The PR list on GitHub is the record.
+- This repo was built under the same gate: every PR is under 600 lines and was self-reviewed
+  before merging, with fixes added as follow-up commits. The PR list on GitHub is the record.
+  Self-review is weaker than a second reviewer; see the page on review identity.
 
 > **Caution.** The Cisco study is old (published 2006), run by a company that sells review
 > tools, and covers one team. Read the numbers as a rough limit, not a law. The 400 and 600
@@ -48,5 +51,5 @@ renamed helper and some reformatting. A reviewer can't tell which lines matter.
   docs. The gate stops the worst case; it does not judge risk.
 - Splitting has a cost: more PRs, more waiting, and stacked branches to keep up to date. Google's
   guide suggests stacking changes so the author is not blocked while waiting.
-- Generated files are excluded by pattern. A repo with other generated code has to add its
-  own patterns, or that code will count.
+- Generated files are excluded by pattern. A repo whose generated code lives somewhere else has
+  to add its own patterns in the `REPO-SPECIFIC` block, or that code will count.
