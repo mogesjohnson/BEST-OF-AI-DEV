@@ -18,8 +18,7 @@ Run these from the repo root. They are the only definition of "checks pass".
 <!-- REPO-SPECIFIC: replace with the real commands. Delete any that do not exist. -->
 - Install hooks once per clone: `npm install` (sets `core.hooksPath`; no dependencies).
   pre-commit scans for secrets; pre-push runs `npm test` and the size gate.
-- Test the scripts, hooks and template sync: `npm test` (Node 20+)
-- Check PR size before pushing: `npm run check:size`
+- Test scripts, hooks and template sync: `npm test` (Node 20+). PR size: `npm run check:size`
 <!-- /REPO-SPECIFIC -->
 
 ## Where things live
@@ -37,8 +36,7 @@ Run these from the repo root. They are the only definition of "checks pass".
 2. One task, one branch, one worktree: `<agent>/<short-topic>`, off fresh `main`.
 3. Small PRs. The size gate fails above 600 changed lines (lockfiles excluded); aim under 400.
 4. Conventional Commits: lowercase `type(scope): subject`, at most 72 characters. The hook checks it.
-   End each commit with `Refs: #N` (or the task file) and `Agent: <your name>` trailers;
-   the hook does not check trailers.
+   End each commit with `Refs: #N` (or the task file) and `Agent: <name>` trailers (unchecked).
 5. The PR template is the report. Fill every section; untick what you did not check.
 6. The author never reviews or merges their own PR. See RULES.md R6.
 7. Merge only when `gh pr checks <n> --watch --fail-fast` is green. See RULES.md R15.
@@ -68,6 +66,5 @@ Read RULES.md before your first commit. The short version:
      (for example "evidence receipts are sanitized" or "the reference site is read-only").
      Anything that applies to every repo belongs in BEST-OF-AI-DEV instead. -->
 - `template/` is the product. A change there must keep the root copy in sync in the same PR.
-- Claims about the owner's repos cite a file or PR. Anything unverified is marked `TODO(verify)`.
-- Never edit the owner's other repos from here. Migration notes describe changes; they do not make them.
+- Cite a file or PR for claims about the owner's repos (else `TODO(verify)`); never edit them.
 <!-- /REPO-SPECIFIC -->
