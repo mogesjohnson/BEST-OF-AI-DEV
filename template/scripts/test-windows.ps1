@@ -15,7 +15,10 @@
       list without stopping anything;
     - lefthook installs and runs the same commit-msg check (SKIP when lefthook is absent).
   Prints PASS, FAIL or SKIP per check. Exit 0 when nothing failed, 1 otherwise.
-  Never touches your real repos or processes. -Keep leaves the temp folder for inspection.
+  If any setup step fails (temp folder, copy, git init or config, setup-hooks, a fixture
+  commit), it prints ABORT and stops at once instead of running checks in a broken repo.
+  Never touches your real repos or processes, and never runs npm. -Keep leaves the temp
+  folder for inspection.
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File .\template\scripts\test-windows.ps1
@@ -41,6 +44,17 @@ function Invoke-Tool {
   return New-Object PSObject -Property @{ Code = $LASTEXITCODE; Out = $lines.ToArray(); Text = ($lines -join "`n") }
 }
 
+# A setup step that must work. On failure: report it and abort the whole run.
+function Invoke-Setup {
+  param([string]$Step, [string]$Exe, [string[]]$ToolArgs)
+  $r = Invoke-Tool $Exe $ToolArgs
+  if ($r.Code -ne 0) {
+    Add-Result 'FAIL' "setup: $Step" "exit $($r.Code): $(Get-Last $r)"
+    throw "setup failed: $Step"
+  }
+  return $r
+}
+
 function Write-TextFile {
   param([string]$Path, [string]$Text)
   # UTF-8 without BOM and LF, like the repo. Out-File in 5.1 writes UTF-16.
@@ -53,6 +67,10 @@ function Get-Last {
   if ($o.Count -le $Count) { return ($o -join ' | ') }
   return ($o[($o.Count - $Count)..($o.Count - 1)] -join ' | ')
 }
+
+# Git exports GIT_DIR and GIT_INDEX_FILE to hooks. If this runs from one, every git call
+# below would hit the real repo instead of the temp one. Drop them for this process.
+Get-ChildItem -Path 'Env:' | Where-Object { $_.Name -like 'GIT_*' } | ForEach-Object { Remove-Item -LiteralPath ('Env:\' + $_.Name) }
 
 $scriptsDir = $PSScriptRoot
 $parentDir = Split-Path -Parent $scriptsDir
@@ -97,25 +115,41 @@ if (-not (Test-Path -LiteralPath $hooksDir)) {
 # 3. Temp repo. The space in the folder name is deliberate.
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('bod selftest ' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 $repo = Join-Path $tmp 'repo'
-[void](New-Item -ItemType Directory -Path $repo -Force)
-Copy-Item -LiteralPath $scriptsDir -Destination (Join-Path $repo 'scripts') -Recurse
-Copy-Item -LiteralPath $hooksDir -Destination (Join-Path $repo '.githooks') -Recurse
-# Keep the copied tooling out of the commits, so only the test files are staged and scanned.
-Write-TextFile (Join-Path $repo '.gitignore') "scripts/`n.githooks/`n"
-Push-Location -LiteralPath $repo
+$pushed = $false
+$aborted = $null
 
 try {
-  [void](Invoke-Tool 'git' @('init', '-q', '-b', 'main'))
-  foreach ($kv in @(@('user.name', 'selftest'), @('user.email', 'selftest@example.invalid'), @('commit.gpgsign', 'false'), @('core.autocrlf', 'false'))) {
-    [void](Invoke-Tool 'git' @('config', $kv[0], $kv[1]))
+  try {
+    [void](New-Item -ItemType Directory -Path $repo -Force -ErrorAction Stop)
+    Copy-Item -LiteralPath $scriptsDir -Destination (Join-Path $repo 'scripts') -Recurse -ErrorAction Stop
+    Copy-Item -LiteralPath $hooksDir -Destination (Join-Path $repo '.githooks') -Recurse -ErrorAction Stop
+    # Keep the copied tooling out of the commits, so only the test files are staged and scanned.
+    Write-TextFile (Join-Path $repo '.gitignore') "scripts/`n.githooks/`n"
+    Push-Location -LiteralPath $repo -ErrorAction Stop
+    $pushed = $true
+  } catch {
+    Add-Result 'FAIL' 'setup: temp repo' "$_"
+    throw
   }
 
-  $r = Invoke-Tool 'node' @('scripts/setup-hooks.mjs')
+  [void](Invoke-Setup 'git init' 'git' @('init', '-q', '-b', 'main'))
+  # Prove git now sees the temp repo, not an outer one: at a repo top, --git-dir prints ".git".
+  $gd = Invoke-Setup 'git rev-parse' 'git' @('rev-parse', '--git-dir')
+  if ($gd.Out.Count -eq 0 -or $gd.Out[0] -ne '.git') {
+    Add-Result 'FAIL' 'setup: temp repo is isolated' "git dir is '$($gd.Text)', expected .git"
+    throw 'setup failed: temp repo is not isolated'
+  }
+  foreach ($kv in @(@('user.name', 'selftest'), @('user.email', 'selftest@example.invalid'), @('commit.gpgsign', 'false'), @('core.autocrlf', 'false'))) {
+    [void](Invoke-Setup "git config $($kv[0])" 'git' @('config', $kv[0], $kv[1]))
+  }
+
+  $r = Invoke-Setup 'setup-hooks.mjs' 'node' @('scripts/setup-hooks.mjs')
   $hp = Invoke-Tool 'git' @('config', 'core.hooksPath')
-  if ($r.Code -eq 0 -and $hp.Out.Count -gt 0 -and $hp.Out[0] -eq '.githooks') {
+  if ($hp.Out.Count -gt 0 -and $hp.Out[0] -eq '.githooks') {
     Add-Result 'PASS' 'setup-hooks sets core.hooksPath'
   } else {
-    Add-Result 'FAIL' 'setup-hooks sets core.hooksPath' (Get-Last $r)
+    Add-Result 'FAIL' 'setup: setup-hooks sets core.hooksPath' (Get-Last $r)
+    throw 'setup failed: hooks are not installed'
   }
 
   # 4. commit-msg hook.
@@ -142,27 +176,28 @@ try {
   }
 
   # 5. pr-size against main.
-  [void](Invoke-Tool 'git' @('switch', '-q', '-c', 'feature'))
+  if ($good.Code -ne 0) { throw 'setup failed: no first commit to branch from' }
+  [void](Invoke-Setup 'git switch feature' 'git' @('switch', '-q', '-c', 'feature'))
   Write-TextFile (Join-Path $repo 'small.txt') ((1..20 | ForEach-Object { "line $_" }) -join "`n")
-  [void](Invoke-Tool 'git' @('add', '-A'))
-  [void](Invoke-Tool 'git' @('commit', '-q', '-m', 'feat: add a small file'))
+  [void](Invoke-Setup 'git add small.txt' 'git' @('add', '-A'))
+  [void](Invoke-Setup 'commit small.txt' 'git' @('commit', '-q', '-m', 'feat: add a small file'))
   $small = Invoke-Tool 'node' @('scripts/check/pr-size.mjs', '--base', 'main')
   if ($small.Code -eq 0) { Add-Result 'PASS' 'pr-size passes 20 lines' }
   else { Add-Result 'FAIL' 'pr-size passes 20 lines' "exit $($small.Code): $(Get-Last $small)" }
 
   Write-TextFile (Join-Path $repo 'big.txt') ((1..700 | ForEach-Object { "line $_" }) -join "`n")
-  [void](Invoke-Tool 'git' @('add', '-A'))
-  [void](Invoke-Tool 'git' @('commit', '-q', '-m', 'feat: add a big file'))
+  [void](Invoke-Setup 'git add big.txt' 'git' @('add', '-A'))
+  [void](Invoke-Setup 'commit big.txt' 'git' @('commit', '-q', '-m', 'feat: add a big file'))
   $big = Invoke-Tool 'node' @('scripts/check/pr-size.mjs', '--base', 'main')
   if ($big.Code -eq 1) { Add-Result 'PASS' 'pr-size fails 720 lines' }
   else { Add-Result 'FAIL' 'pr-size fails 720 lines' "exit $($big.Code), expected 1: $(Get-Last $big)" }
-  [void](Invoke-Tool 'git' @('switch', '-q', 'main'))
+  [void](Invoke-Setup 'git switch main' 'git' @('switch', '-q', 'main'))
 
   # 6. cleanup-worktrees.ps1, dry run only.
   $wtMerged = Join-Path $tmp 'wt merged'
   $wtDirty = Join-Path $tmp 'wt dirty'
-  [void](Invoke-Tool 'git' @('worktree', 'add', '-q', '-b', 'merged-wt', $wtMerged, 'main'))
-  [void](Invoke-Tool 'git' @('worktree', 'add', '-q', '-b', 'dirty-wt', $wtDirty, 'main'))
+  [void](Invoke-Setup 'worktree add merged' 'git' @('worktree', 'add', '-q', '-b', 'merged-wt', $wtMerged, 'main'))
+  [void](Invoke-Setup 'worktree add dirty' 'git' @('worktree', 'add', '-q', '-b', 'dirty-wt', $wtDirty, 'main'))
   Write-TextFile (Join-Path $wtDirty 'wip.txt') "unsaved work`n"
   $cleanup = Join-Path $scriptsDir 'cleanup-worktrees.ps1'
 
@@ -218,7 +253,7 @@ try {
   if (Test-Path -LiteralPath (Join-Path $localBin 'lefthook.cmd')) { $env:PATH = "$localBin;$env:PATH" }
   $lefthook = Get-Command lefthook -ErrorAction SilentlyContinue
   if (-not $lefthook) {
-    Add-Result 'SKIP' 'lefthook' 'not installed (npm i -D lefthook to test it)'
+    Add-Result 'SKIP' 'lefthook' 'not installed; see docs/windows.md (this script never installs it)'
   } elseif (-not (Test-Path -LiteralPath $lefthookYml)) {
     Add-Result 'SKIP' 'lefthook' 'no lefthook.yml or optional\lefthook.yml next to scripts'
   } else {
@@ -235,15 +270,25 @@ try {
       Add-Result 'FAIL' 'lefthook runs the commit-msg check' "setup exit $($lh.Code), hooksPath still set=$($hp2.Code -eq 0), bad exit $($lhBad.Code), good exit $($lhGood.Code): $(Get-Last $lh)"
     }
   }
+} catch {
+  $aborted = "$_"
 } finally {
-  Pop-Location
+  if ($pushed) { Pop-Location }
   if ($Keep) {
     Write-Output "test-windows: kept $tmp"
   } else {
-    [void](Invoke-Tool 'git' @('-C', $repo, 'worktree', 'remove', '--force', (Join-Path $tmp 'wt merged')))
-    [void](Invoke-Tool 'git' @('-C', $repo, 'worktree', 'remove', '--force', (Join-Path $tmp 'wt dirty')))
+    # Only when the temp repo exists: otherwise git -C would search upward for another repo.
+    if (Test-Path -LiteralPath (Join-Path $repo '.git')) {
+      [void](Invoke-Tool 'git' @('-C', $repo, 'worktree', 'remove', '--force', (Join-Path $tmp 'wt merged')))
+      [void](Invoke-Tool 'git' @('-C', $repo, 'worktree', 'remove', '--force', (Join-Path $tmp 'wt dirty')))
+    }
     Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue
   }
+}
+
+if ($aborted) {
+  Write-Output "ABORT test-windows: $aborted. Later checks did not run."
+  exit 1
 }
 
 $fails = @($script:results | Where-Object { $_ -eq 'FAIL' }).Count
