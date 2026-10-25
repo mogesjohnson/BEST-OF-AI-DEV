@@ -61,3 +61,30 @@ hosting under a subpath. The site isn't deployed yet.
   don't exist yet).
 - [ADR 0004](docs/decisions/0004-commit-and-branch-names.md) on commit and branch names is
   still proposed.
+
+## About me
+
+I'm Moges Johnson ([@mogesjohnson](https://github.com/mogesjohnson), on GitHub since December
+2023). From my [portfolio](https://github.com/mogesjohnson/Personal-Portfolio), self-reported:
+
+- Computer Science student at Liberty University: BS in Computer Science, Software Engineering
+  concentration, minor in Business, expected Spring 2028.
+- Handshake AI Fellow since August 2026.
+- Software Engineer Intern at NonProfitly, Inc., summer 2026.
+
+Public projects:
+
+- [shadow-army](https://github.com/mogesjohnson/shadow-army): a CLI that commands other AI CLIs
+  with isolated context, and its docs site, [shadow-docs](https://github.com/mogesjohnson/shadow-docs).
+- [trace-workbench](https://github.com/mogesjohnson/trace-workbench): shared Windows computer
+  tools for AI agents, in early development.
+- [post-it-board](https://github.com/mogesjohnson/post-it-board) and
+  [how-to-post-it](https://github.com/mogesjohnson/how-to-post-it): a corkboard of daily notes,
+  and how notes reach it.
+- C++ data structures: [Binary_Search_Tree](https://github.com/mogesjohnson/Binary_Search_Tree),
+  [LRU_Buffer_Pool](https://github.com/mogesjohnson/LRU_Buffer_Pool) and
+  [Self_Organizing_Lists](https://github.com/mogesjohnson/Self_Organizing_Lists).
+
+<!-- TODO(verify): Moges to confirm the bullets above and add anything the portfolio leaves out. -->
+
+No license has been chosen yet, so all rights are reserved for now. <!-- TODO(verify): owner to pick a license. -->
