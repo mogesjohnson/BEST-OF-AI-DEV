@@ -10,10 +10,12 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { withoutGitEnv } from '../lib/git-env.mjs';
 
 // Template checks. Keep them: they are the floor, not a suggestion.
 const FLOOR = {
-  'pre-commit': [{ name: 'secrets', run: 'node {scripts}/check/secrets.mjs --staged' }],
+  // gitEnv: the staged scan must see GIT_INDEX_FILE ("git commit <path>" uses a temp index).
+  'pre-commit': [{ name: 'secrets', run: 'node {scripts}/check/secrets.mjs --staged', gitEnv: true }],
   'pre-push': [{ name: 'pr size', run: 'node {scripts}/check/pr-size.mjs', blockedExit: 2 }],
 };
 
@@ -34,6 +36,11 @@ export function plan(hook, scriptsDir) {
 }
 
 /** exit 0 pass; the check's blockedExit code means it could not run (reported, not fatal). */
+/** Hook variables (GIT_DIR, GIT_INDEX_FILE...) reach only checks that ask for them. */
+export function checkEnv(check, env = process.env) {
+  return check.gitEnv ? { ...env } : withoutGitEnv(env);
+}
+
 export function verdict(check, status) {
   if (status === 0) return 'pass';
   if (check.blockedExit !== undefined && status === check.blockedExit) return 'blocked';
@@ -54,7 +61,7 @@ function main(argv) {
       continue;
     }
     const started = Date.now();
-    const r = spawnSync(check.run, { shell: true, stdio: 'inherit' });
+    const r = spawnSync(check.run, { shell: true, stdio: 'inherit', env: checkEnv(check) });
     const v = verdict(check, r.status ?? 1);
     results.push(v);
     console.log(`${hook}: ${v.padEnd(7)} ${check.name} (${Date.now() - started} ms)`);
