@@ -4,6 +4,9 @@
 //   node scripts/check/secrets.mjs --staged   added lines in the index (pre-commit)
 //   node scripts/check/secrets.mjs --all      every tracked file as checked out (CI)
 //
+// File names are always checked, even for binary and empty files (cert.p12, an empty
+// .env), and come from git -z output, so spaces and non-ASCII names are safe.
+//
 // Uses gitleaks when it is on PATH, and always runs the built-in patterns below,
 // because gitleaks does not know about personal paths. A line ending in a
 // "gitleaks:allow" comment is skipped by both. Exit 0 clean, 1 findings, 2 git error.
@@ -25,7 +28,8 @@ export const PATTERNS = [
   ['personal Windows path', /\b[A-Za-z]:[\\/]+Users[\\/]+(?!(Public|Default|<|\.\.\.|…|%))[^\\/\s"'`<>]+/i],
   ['personal home path', /(?<![\w.])\/(Users|home)\/(?!(runner|node|user|<|\.\.\.|…|\$))[a-z][\w.-]+\//],
 ];
-export const BAD_FILES = [/(^|\/)\.env(\.(?!example$|sample$|template$)[\w.-]+)?$/, /\.(pem|p12|pfx|key)$/, /(^|\/)id_(rsa|ed25519|ecdsa)$/];
+// Case-insensitive: Windows and macOS treat .ENV and cert.P12 as the same files.
+export const BAD_FILES = [/(^|\/)\.env(\.(?!example$|sample$|template$)[\w.-]+)?$/i, /\.(pem|p12|pfx|key)$/i, /(^|\/)id_(rsa|ed25519|ecdsa)$/i];
 const ALLOW = /gitleaks:allow/;
 
 /** Returns findings for one file's lines: { file, line, rule }. Never returns the secret itself. */
@@ -39,28 +43,44 @@ export function scanLines(file, lines) {
   return findings;
 }
 
-/** Parses `git diff --cached -U0` into Map(file -> [[lineNo, text]]) of added lines. */
-export function addedLines(diff) {
+/**
+ * Parses `git diff --cached -U0 --no-renames` into Map(file -> [[lineNo, text]]).
+ * `names` is the same diff's `--name-only -z` list, in the same order. Each
+ * "diff --git" header starts the next name, so the "+++ b/path" line is never parsed
+ * (it is quoted or tab-suffixed for unusual names). "--- " and "+++ " are headers only
+ * before the first "@@" of a file; inside a hunk, "+++ x" is an added line "++ x".
+ * Binary and empty files have no hunks and map to [], so their names are still checked.
+ */
+export function addedLines(diff, names) {
   const files = new Map();
-  let file = null;
+  let i = -1;
+  let inHunk = false;
   let no = 0;
   for (const line of diff.split('\n')) {
-    if (line.startsWith('+++ ')) {
-      file = line === '+++ /dev/null' ? null : line.slice(6);
-      if (file) files.set(file, []);
-    } else if (line.startsWith('@@')) {
+    if (line.startsWith('diff --git ')) {
+      i += 1;
+      if (i >= names.length) throw new Error('diff has more files than --name-only');
+      files.set(names[i], []);
+      inHunk = false;
+    } else if (i >= 0 && line.startsWith('@@')) {
       no = Number(/\+(\d+)/.exec(line)[1]);
-    } else if (file && line.startsWith('+')) {
-      files.get(file).push([no++, line.slice(1)]);
+      inHunk = true;
+    } else if (inHunk && line.startsWith('+')) {
+      files.get(names[i]).push([no++, line.slice(1)]);
     }
   }
+  if (i + 1 !== names.length) throw new Error(`diff lists ${i + 1} files, --name-only lists ${names.length}`);
   return files;
 }
 
 const git = (args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
 
 function collect(mode) {
-  if (mode === '--staged') return addedLines(git(['-c', 'core.quotePath=false', 'diff', '--cached', '-U0', '--no-color', '--no-ext-diff', '--diff-filter=ACMR']));
+  if (mode === '--staged') {
+    const opts = ['diff', '--cached', '--no-renames', '--diff-filter=ACM', '--no-color', '--no-ext-diff', '--no-textconv'];
+    const names = git([...opts, '--name-only', '-z']).split('\0').filter(Boolean);
+    return addedLines(git([...opts, '-U0']), names);
+  }
   const files = new Map();
   for (const file of git(['ls-files', '-z']).split('\0').filter(Boolean)) {
     let text;
@@ -72,7 +92,8 @@ function collect(mode) {
 }
 
 function gitleaks(mode) {
-  const args = mode === '--staged' ? ['git', '--pre-commit', '--staged', '--redact', '--no-banner'] : ['git', '--redact', '--no-banner'];
+  // --all scans the checked-out files (gitleaks >= 8.19 "dir"), not the whole history.
+  const args = mode === '--staged' ? ['git', '--pre-commit', '--staged', '--redact', '--no-banner'] : ['dir', '.', '--redact', '--no-banner'];
   const r = spawnSync('gitleaks', args, { stdio: 'inherit' });
   if (r.error) return 'missing';
   return r.status === 0 ? 'pass' : 'fail';
@@ -85,7 +106,7 @@ function main(argv) {
     return 2;
   }
   let files;
-  try { files = collect(mode); } catch (err) { console.error(`secrets: git failed: ${err.message.split('\n')[0]}`); return 2; }
+  try { files = collect(mode); } catch (err) { console.error(`secrets: could not list changes: ${err.message.split('\n')[0]}`); return 2; }
   const findings = [...files].flatMap(([file, lines]) => scanLines(file, lines));
   for (const f of findings) console.error(`secrets: ${f.file}${f.line ? `:${f.line}` : ''}: ${f.rule}`);
   const leaks = process.env.SECRETS_SKIP_GITLEAKS ? 'skipped' : gitleaks(mode);
