@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { exceptionReason, globToRegExp, isExcluded, parseNumstat, summarize } from '../check/pr-size.mjs';
+import { exceptionReason, globToRegExp, isExcluded, parseNumstat, pushedTips, summarize, tighten } from '../check/pr-size.mjs';
 
 test('globs match the way the patterns read', () => {
   assert.ok(globToRegExp('**/yarn.lock').test('yarn.lock'));
@@ -46,4 +46,39 @@ test('exceptions need the label and a real reason', () => {
   assert.equal(exceptionReason({ PR_LABELS: 'docs', PR_BODY: body }), null, 'label required');
   assert.equal(exceptionReason({ PR_LABELS: 'size-exception', PR_BODY: 'Size exception: big' }), null, 'reason too short');
   assert.ok(exceptionReason({ SIZE_EXCEPTION: 'one-time bootstrap of the repo' }));
+});
+
+test('the exception reason must be on the line itself, outside comments', () => {
+  const env = (PR_BODY) => ({ PR_LABELS: 'size-exception', PR_BODY });
+  assert.equal(exceptionReason(env('Size exception:\nregenerated the vendored schema')), null, 'next line');
+  assert.equal(exceptionReason(env('<!-- Size exception: regenerated the vendored schema -->')), null, 'comment');
+  assert.equal(exceptionReason(env('<!--\nSize exception: regenerated the vendored schema\n-->')), null, 'block comment');
+  assert.ok(exceptionReason(env('Size exception: regenerated the vendored schema')));
+});
+
+test('env overrides can tighten the limits but not loosen them', () => {
+  assert.equal(tighten('300', 600), 300);
+  assert.equal(tighten('100000', 600), 600);
+  assert.equal(tighten('0', 600), 600);
+  assert.equal(tighten('lots', 600), 600);
+  assert.equal(tighten(undefined, 600), 600);
+});
+
+test('SIZE_EXCEPTION is ignored in CI', () => {
+  const reason = 'one-time bootstrap of the repo';
+  assert.ok(exceptionReason({ SIZE_EXCEPTION: reason }));
+  assert.equal(exceptionReason({ SIZE_EXCEPTION: reason, CI: 'true' }), null);
+  assert.equal(exceptionReason({ SIZE_EXCEPTION: reason, GITHUB_ACTIONS: 'true' }), null);
+});
+
+test('pushedTips keeps pushed branches and skips deletes and tags', () => {
+  const z = '0'.repeat(40);
+  const input = [
+    `refs/heads/feat/a ${'a'.repeat(40)} refs/heads/feat/a ${z}`,
+    `refs/heads/old ${z} refs/heads/old ${'b'.repeat(40)}`,
+    `refs/tags/v1 ${'c'.repeat(40)} refs/tags/v1 ${z}`,
+    '',
+  ].join('\r\n');
+  assert.deepEqual(pushedTips(input), [{ ref: 'feat/a', sha: 'a'.repeat(40) }]);
+  assert.deepEqual(pushedTips(''), []);
 });

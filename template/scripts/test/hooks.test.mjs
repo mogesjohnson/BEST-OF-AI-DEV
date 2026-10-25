@@ -13,8 +13,9 @@ const root = fileURLToPath(new URL('../..', import.meta.url));
 
 // withoutGitEnv: when this runs from a pre-push hook, GIT_DIR points at the real repo.
 function run(cwd, cmd, args, env = {}) {
-  // CI is cleared because setup-hooks.mjs skips itself in CI.
-  return spawnSync(cmd, args, { cwd, encoding: 'utf8', env: { ...withoutGitEnv(), CI: '', ...env } });
+  // CI is cleared because setup-hooks.mjs skips itself in CI, and GITHUB_ACTIONS because
+  // pr-size ignores SIZE_EXCEPTION there.
+  return spawnSync(cmd, args, { cwd, encoding: 'utf8', env: { ...withoutGitEnv(), CI: '', GITHUB_ACTIONS: '', ...env } });
 }
 
 test('hooks and size gate work in a fresh repo with a spaced path', () => {
@@ -52,6 +53,18 @@ test('hooks and size gate work in a fresh repo with a spaced path', () => {
     assert.equal(over.status, 1);
     assert.match(over.stdout, /700 changed lines .* 1 excluded/);
     assert.equal(size({ SIZE_EXCEPTION: 'test of the exception path' }).status, 0);
+    // pre-push input names the branch being pushed; it is checked even when HEAD is elsewhere.
+    const feat = g('rev-parse', 'feat').stdout.trim();
+    g('switch', '-q', 'main');
+    const pushed = spawnSync(process.execPath, ['scripts/check/pr-size.mjs', '--base', 'main', '--stdin-refs'], {
+      cwd: dir, encoding: 'utf8', env: { ...withoutGitEnv(), CI: '', GITHUB_ACTIONS: '' },
+      input: `refs/heads/feat ${feat} refs/heads/feat ${'0'.repeat(40)}\n`,
+    });
+    assert.equal(pushed.status, 1, pushed.stdout);
+    assert.match(pushed.stdout, /\[feat\]: 700 changed lines/);
+    const first = run(dir, process.execPath, ['scripts/check/pr-size.mjs']);
+    assert.equal(first.status, 2, 'no origin/main yet: blocked, not failed');
+    assert.equal(first.stderr.trim().split('\n').length, 1, `one line, not a git stack: ${first.stderr}`);
     const usage = run(dir, process.execPath, ['scripts/check/pr-size.mjs', '--base']);
     assert.equal(usage.status, 2, 'a missing --base value is a usage error, not a git error');
   } finally {
