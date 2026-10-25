@@ -1,0 +1,8 @@
+/* Base only. The Shadow Docs palette and layout come in the styling change. */
+html,
+body {
+  margin: 0;
+  background: #0c0c0c;
+  color: #e6e3ec;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
