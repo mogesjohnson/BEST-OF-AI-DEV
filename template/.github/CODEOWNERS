@@ -2,7 +2,7 @@
 # CODEOWNERS only binds when the main ruleset has "Require review from Code Owners", and
 # GitHub never lets an author approve their own PR. If agents push as the owner's account,
 # this file requests nothing and protects nothing. It is a list of sensitive paths until
-# agents get their own identity (see docs: Independent review) and a ruleset requires it.
+# agents get their own identity (see docs/why/04-review-identity.md in BEST-OF-AI-DEV) and a ruleset requires it.
 # The last matching pattern wins, so the catch-all comes first.
 
 # REPO-SPECIFIC: replace @OWNER with real users or teams. Add the repo's sensitive paths.

@@ -47,7 +47,8 @@ stops a force-push from a plain shell unless a `main` ruleset blocks force pushe
 its own PR. Review runs as a separate identity and a separate read-only session.
 *Enforced by:* honor. A ruleset requiring one approval from someone other than the last pusher
 would enforce it, but not while every agent pushes as the owner's account: GitHub sees one
-person. That needs a separate reviewer account or bot. See `docs/` "Independent review".
+person. That needs a separate reviewer account or bot. See "Independent review identity":
+https://github.com/mogesjohnson/BEST-OF-AI-DEV/blob/main/docs/why/04-review-identity.md
 
 **R7. Commits and PRs follow the format.** Conventional Commits with a lowercase type and scope
 (`fix(api): ...`), subject at most 72 characters, no closing keywords (`closes`, `fixes`, `resolves`). Link issues with `Refs: #12`.
