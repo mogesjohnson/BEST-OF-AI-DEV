@@ -48,7 +48,7 @@ jobs:
           own=no
           case ",$PR_LABELS," in *,checker-change,*)
             if printf '%s\n' "$PR_BODY" | grep -Eq '^Checker change: *[^ ]' &&
-               git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- "$SCRIPTS/check/" | grep -q .; then
+               git diff --name-only "$BASE_SHA...$HEAD_SHA" -- "$SCRIPTS/check/" | grep -q .; then
               own=yes
             else
               echo "::error::checker-change needs a 'Checker change:' line and a change under $SCRIPTS/check/"
