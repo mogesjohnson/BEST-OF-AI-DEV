@@ -1,4 +1,4 @@
-// BEST-OF-AI-DEV template v1. Run with: node --test scripts/test/
+// BEST-OF-AI-DEV template v1. Run with: node scripts/test/run.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -33,4 +33,13 @@ test('compare reports missing and drifted files, and skips optional ones', () =>
   writeFileSync(join(root, 'same.md'), 'a');
   writeFileSync(join(root, 'edited.md'), 'changed');
   assert.deepEqual(compare(tpl, root), ['differs: edited.md', 'missing: sub/gone.md']);
+});
+
+test('compare skips prefixes the repo provides another way', () => {
+  const t = mkdtempSync(join(tmpdir(), 'bod-skip-t-'));
+  const r = mkdtempSync(join(tmpdir(), 'bod-skip-r-'));
+  mkdirSync(join(t, 'scripts'));
+  writeFileSync(join(t, 'scripts', 'x.mjs'), 'x');
+  assert.deepEqual(compare(t, r), ['missing: scripts/x.mjs']);
+  assert.deepEqual(compare(t, r, ['scripts/']), []);
 });
