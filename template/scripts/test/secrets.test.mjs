@@ -30,6 +30,13 @@ test('catches personal paths but not placeholders', () => {
   assert.deepEqual(scan('cd C:\\Users\\<you>\\code'), []);
   assert.deepEqual(scan('personal paths (`C:\\Users\\...`)'), []);
   assert.deepEqual(scan('runs-on /home/runner/work'), []);
+  const home = 'home';
+  for (const p of [`/${users}/Jane/dev`, `/${users.toUpperCase()}/jane/x`, `/${home}/Bob/src`, `/${home}/userbob/x`, `"/${home}/jane.doe/x"`]) {
+    assert.deepEqual(scan(`cd ${p}`), ['personal home path'], p);
+  }
+  for (const p of [`/${home}/user/x`, `/${home}/Runner/work`, `/${users}/<you>/x`, `/${home}/$USER/x`]) {
+    assert.deepEqual(scan(`cd ${p}`), [], p);
+  }
   assert.deepEqual(scan('path: "$env:USERPROFILE\\code"'), []);
 });
 
