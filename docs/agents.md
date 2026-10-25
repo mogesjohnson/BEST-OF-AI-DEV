@@ -23,9 +23,12 @@ permissions) and Antigravity's rules page. Re-check when you upgrade; these move
 - **Claude Code** allows the repo's own check commands and read-only git. It asks before pushing,
   installing packages, `gh`, `curl`, web fetches and edits to CI, hooks, scripts or
   `package.json`. It denies reading `.env*` and key files, `--no-verify` anywhere in a command,
-  `git commit -n`, force pushes (`--force*`, `-f`, `+ref`), `reset --hard`, any mention of
-  `core.hooksPath`, git's `--output` and `--ext-diff` (so the read-only allows cannot write files
-  or run a diff program), and `rm -rf`. The rules put `*` before the flag, so the flag's position
+  `git commit -n`, force pushes (`--force*`, `-f`, `+ref`), `reset --hard`, setting or unsetting
+  `core.hooksPath` (reading it with `git config --get` is allowed), git's `--output`, `--ext-diff`
+  and `--no-index`, `git show` of `.env`, `.pem` or `.key` paths, `git log` and `git diff` of `.env` paths, git output redirected with `>`
+  or `>>`, and `rm -rf`. Those git rules exist because `git diff`, `git log` and `git show` are
+  allowed: without them, a read-only allow could write files, run a diff program, or print a
+  secret from history or from outside the repo. The rules put `*` before the flag, so the flag's position
   does not matter. `scripts/test/agent-config.test.mjs` runs a table of commands through a model
   of the documented matcher. Change a rule and the table tells you what moved.
   Deny and ask rules apply as soon as the file is in the repo. Allow rules wait until you trust the folder.
@@ -41,7 +44,8 @@ permissions) and Antigravity's rules page. Re-check when you upgrade; these move
 Deny lists are speed bumps, not a sandbox. Claude Code documents that rules do not see through
 `git -C <dir> push`, `git -c key=value ...`, a full path such as `/usr/bin/git`, or a script
 that runs git for the agent. Combined short flags (`git commit -anm x`) also get past the `-n`
-rule. The test file keeps these as named gaps so they stay visible. Treat the list as a
+rule. A redirect with no space (`git log >out.txt`) and hooks set through `GIT_CONFIG_*`
+environment variables are not caught either. The test file keeps these as named gaps so they stay visible. Treat the list as a
 statement of intent that catches honest mistakes; a PreToolUse hook can parse the command
 properly if you need more. Real isolation comes from:
 
