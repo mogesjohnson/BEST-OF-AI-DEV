@@ -9,6 +9,7 @@
 // Repo-specific text is ignored in two forms, in any comment syntax:
 //   block: a line containing "REPO-SPECIFIC:" through a line containing "/REPO-SPECIFIC"
 //   tail:  a line containing "REPO-SPECIFIC-BELOW" and everything after it
+// Seeded files (SEEDED below, e.g. package.json) must exist but are not compared.
 // Exit 0 when in sync, 1 on drift, 2 on usage errors.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep, resolve } from 'node:path';
@@ -18,6 +19,12 @@ import { fileURLToPath } from 'node:url';
 export const OPTIONAL = new Map([
   ['GEMINI.md', 'only needed when a Gemini or Antigravity agent works in the repo'],
   ['optional/', 'opt-in extras; copy only what you use'],
+]);
+
+// Starter files: a repo must have one, but owns its content. JSON has no comments, so
+// REPO-SPECIFIC blocks cannot mark the parts that differ.
+export const SEEDED = new Map([
+  ['package.json', 'starter only; each repo owns its name, scripts and dependencies'],
 ]);
 
 export function stripRepoSpecific(text) {
@@ -68,6 +75,7 @@ export function compare(templateDir, repoDir, skip = []) {
       if (!isOptional(path)) problems.push(`missing: ${path}`);
       continue;
     }
+    if (SEEDED.has(path)) continue;
     const want = stripRepoSpecific(readFileSync(join(templateDir, path), 'utf8'));
     const have = stripRepoSpecific(readFileSync(target, 'utf8'));
     if (want !== have) problems.push(`differs: ${path}`);

@@ -43,3 +43,13 @@ test('compare skips prefixes the repo provides another way', () => {
   assert.deepEqual(compare(t, r), ['missing: scripts/x.mjs']);
   assert.deepEqual(compare(t, r, ['scripts/']), []);
 });
+
+test('seeded files must exist but may differ', () => {
+  const root = mkdtempSync(join(tmpdir(), 'sync-seed-'));
+  const tpl = join(root, 'template');
+  mkdirSync(tpl, { recursive: true });
+  writeFileSync(join(tpl, 'package.json'), '{"name":"your-repo"}');
+  assert.deepEqual(compare(tpl, root), ['missing: package.json']);
+  writeFileSync(join(root, 'package.json'), '{"name":"real","dependencies":{}}');
+  assert.deepEqual(compare(tpl, root), []);
+});

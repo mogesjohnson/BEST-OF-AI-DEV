@@ -13,8 +13,10 @@ cannot download executables, and lefthook refuses to install while `core.hooksPa
 
 ## Decision
 
-We will ship `.githooks/` plus Node scripts as the default. `npm install` runs `prepare`, which
-sets `core.hooksPath`. Repos that want lefthook copy `optional/lefthook.yml`, and
+We will ship `.githooks/` plus Node scripts as the default. The template ships a starter
+`package.json` whose `prepare` script sets `core.hooksPath`, so `npm install` installs the hooks.
+A repo without npm runs `node scripts/setup-hooks.mjs` once by hand. Commit the
+`package-lock.json` the first install writes: CI warns and falls back to `npm install` without it. Repos that want lefthook copy `optional/lefthook.yml`, and
 `setup-hooks.mjs` switches to it. If the file exists but the binary does not, it exits 1 and
 keeps `.githooks/` active rather than guessing.
 
