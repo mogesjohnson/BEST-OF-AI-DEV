@@ -1,10 +1,17 @@
 // BEST-OF-AI-DEV template v1. Run with: node scripts/test/run.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compare, stripRepoSpecific } from '../check/template-sync.mjs';
+
+/** A temp folder that is deleted when the test ends, pass or fail. */
+function scratch(t, prefix) {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  return dir;
+}
 
 test('block form hides repo-specific text', () => {
   const a = 'x\n<!-- REPO-SPECIFIC: hint -->\nplaceholder\n<!-- /REPO-SPECIFIC -->\ny';
@@ -22,8 +29,8 @@ test('CRLF and LF compare equal', () => {
   assert.equal(stripRepoSpecific('a\r\nb'), stripRepoSpecific('a\nb'));
 });
 
-test('compare reports missing and drifted files, and skips optional ones', () => {
-  const root = mkdtempSync(join(tmpdir(), 'sync-'));
+test('compare reports missing and drifted files, and skips optional ones', (t) => {
+  const root = scratch(t, 'bod-sync-');
   const tpl = join(root, 'template');
   mkdirSync(join(tpl, 'sub'), { recursive: true });
   writeFileSync(join(tpl, 'same.md'), 'a');
@@ -35,17 +42,17 @@ test('compare reports missing and drifted files, and skips optional ones', () =>
   assert.deepEqual(compare(tpl, root), ['differs: edited.md', 'missing: sub/gone.md']);
 });
 
-test('compare skips prefixes the repo provides another way', () => {
-  const t = mkdtempSync(join(tmpdir(), 'bod-skip-t-'));
-  const r = mkdtempSync(join(tmpdir(), 'bod-skip-r-'));
-  mkdirSync(join(t, 'scripts'));
-  writeFileSync(join(t, 'scripts', 'x.mjs'), 'x');
-  assert.deepEqual(compare(t, r), ['missing: scripts/x.mjs']);
-  assert.deepEqual(compare(t, r, ['scripts/']), []);
+test('compare skips prefixes the repo provides another way', (t) => {
+  const tpl = scratch(t, 'bod-skip-t-');
+  const r = scratch(t, 'bod-skip-r-');
+  mkdirSync(join(tpl, 'scripts'));
+  writeFileSync(join(tpl, 'scripts', 'x.mjs'), 'x');
+  assert.deepEqual(compare(tpl, r), ['missing: scripts/x.mjs']);
+  assert.deepEqual(compare(tpl, r, ['scripts/']), []);
 });
 
-test('seeded files must exist but may differ', () => {
-  const root = mkdtempSync(join(tmpdir(), 'sync-seed-'));
+test('seeded files must exist but may differ', (t) => {
+  const root = scratch(t, 'bod-sync-seed-');
   const tpl = join(root, 'template');
   mkdirSync(tpl, { recursive: true });
   writeFileSync(join(tpl, 'package.json'), '{"name":"your-repo"}');
