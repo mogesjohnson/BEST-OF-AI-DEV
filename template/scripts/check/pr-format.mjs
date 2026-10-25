@@ -20,7 +20,8 @@ export function checkBody(body) {
   const problems = [];
   for (const s of SECTIONS) if (!new RegExp(`^##\\s+${s}\\s*$`, 'mi').test(text)) problems.push(`body is missing the "## ${s}" section`);
   if (!/^Tracking:[ \t]*\S/m.test(text)) problems.push('body needs a "Tracking:" line (an issue, a task spec path, or "none")');
-  if (!STATUS_LINE.test(text)) problems.push('Validation needs at least one "- pass|fail|blocked|not_run: ..." line');
+  const validation = (text.split(/^##\s+Validation\s*$/mi)[1] || '').split(/^##\s/m)[0];
+  if (!STATUS_LINE.test(validation)) problems.push('Validation needs at least one "- pass|fail|blocked|not_run: ..." line');
   if (CLOSING.test(prose)) problems.push('body uses a closing keyword; write "Refs: #N" so the issue stays open until accepted');
   return problems;
 }
@@ -36,6 +37,10 @@ export function parseLog(out) {
 function main(argv) {
   const i = argv.indexOf('--base');
   const base = i === -1 ? process.env.BASE_SHA || 'origin/main' : argv[i + 1];
+  if (!base || base.startsWith('--')) {
+    console.error('usage: pr-format.mjs [--base <ref>]  (PR_TITLE, PR_BODY, BASE_SHA, HEAD_SHA from env)');
+    return 2;
+  }
   const problems = [];
   if (process.env.PR_TITLE !== undefined) problems.push(...checkSubject(process.env.PR_TITLE).map((p) => `title: ${p}`));
   if (process.env.PR_BODY !== undefined) problems.push(...checkBody(process.env.PR_BODY));

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { checkBody, parseLog } from '../check/pr-format.mjs';
+import { checkBody, parseLog, SECTIONS } from '../check/pr-format.mjs';
 
 const filled = `## Summary\n\nAdds x.\n\nTracking: none\n\n## Validation\n\n- pass: \`npm test\`\n- blocked: Actions billing\n\n## Size\n\npr-size: 10\n\n## Review checklist\n\n- [x] ok\n\n## Risks and follow-ups\n\nnone\n`;
 
@@ -15,13 +15,14 @@ test('the untouched PR template still fails: no real tracking line', () => {
 });
 
 test('missing sections, status lines and closing keywords are reported', () => {
-  assert.equal(checkBody('fixed it').length, SECTIONS_COUNT + 2);
+  assert.equal(checkBody('fixed it').length, SECTIONS.length + 2);
   assert.match(checkBody(filled.replace('- pass:', 'pass:').replace('- blocked:', 'blocked:')).join(), /at least one/);
+  const moved = filled.replace('- pass: `npm test`\n- blocked: Actions billing', 'tested').replace('none\n', '- pass: in the wrong section\n');
+  assert.match(checkBody(moved).join(), /at least one/, 'status lines must sit under Validation');
   assert.match(checkBody(`${filled}\nCloses #4`).join(), /closing keyword/);
   assert.deepEqual(checkBody(`${filled}\n<!-- closes #4 in a comment is ignored -->`), []);
   assert.deepEqual(checkBody(`${filled}\nIt rejects \`closes #12\` in commits.`), [], 'quoted examples are fine');
 });
-const SECTIONS_COUNT = 5;
 
 test('parses git log records', () => {
   const out = 'abc\0feat: a\n\nbody\n\x1e\ndef\0fix: b\n\x1e\n';
