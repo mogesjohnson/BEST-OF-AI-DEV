@@ -98,7 +98,8 @@ test('the revert exemption checks the reverted sha and the diff against git', ()
     const run = (base) => spawnSync(process.execPath, [script, '--base', base], { cwd: dir, encoding: 'utf8', env: { ...withoutGitEnv(), PR_TITLE: 'Revert "Merge pull request #12 from owner/feat"', PR_BODY: 'Reverts owner/repo#13' } });
     g('switch', '-q', '-c', 'real', merged);
     g('revert', '--no-edit', '-m', '1', merged);
-    assert.equal(run(merged).status, 0, 'a real revert of a merged PR');
+    const real = run(merged);
+    assert.equal(real.status, 0, `a real revert of a merged PR: ${real.stderr}\n${g('log', '-1', '--format=%B')}`);
     const forge = (name, file, target) => {
       g('switch', '-q', '-c', name, merged);
       writeFileSync(join(dir, file), 'y');
