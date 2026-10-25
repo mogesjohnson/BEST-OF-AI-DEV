@@ -3,6 +3,17 @@
 .bd-page-header {
   margin-bottom: 28px;
 }
+/* Home page banner. The headline is part of the image, so the alt text carries it. */
+.bd-hero {
+  margin: 0 0 28px;
+}
+.bd-hero img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 1px solid var(--bd-edge);
+}
 .bd-eyebrow {
   margin: 0;
   font-size: 13.5px;
