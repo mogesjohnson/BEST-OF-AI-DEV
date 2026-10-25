@@ -41,9 +41,9 @@ looks.
   untracked files", and it doesn't mention ignored ones.
   ([Worktrees](https://code.claude.com/docs/en/worktrees))
 - In this repo, the first version of the cleanup script checked `git status --porcelain`
-  without `--ignored`. A review run of `-Apply` deleted a `.env` from a merged worktree. PR #27
-  added the ignored-file check and a Windows self-test, which asserts that the file is still
-  there afterwards.
+  without `--ignored`. A review found that `-Apply` would delete a `.env` from a merged
+  worktree. PR #27 added the ignored-file check and a Windows self-test that runs `-Apply` and
+  then asserts that the file is still there.
 
 ## Limits
 

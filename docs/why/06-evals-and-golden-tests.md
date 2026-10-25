@@ -44,8 +44,9 @@ An agent reads the output, sees what it expected, and moves on.
 - PR #29 later narrowed the `core.hooksPath` rule. The same table showed that every old
   bypass was still denied, and that `git config --get core.hooksPath` had moved from deny to
   allow.
-- The `.env` deletion fixed in PR #27 got past a dry-run test that passed. That test checked
-  what the script printed, not what was left on disk.
+- Before PR #27, the Windows self-test ran the cleanup script only as a dry run, with no
+  ignored files in the fixtures. It passed. A review of the script found that `-Apply` would
+  delete a `.env`. The new test runs `-Apply` and checks the disk afterwards.
 
 ## Limits
 
