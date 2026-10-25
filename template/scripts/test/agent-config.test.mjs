@@ -23,6 +23,22 @@ export function bashRuleMatches(rule, command) {
   return subs.some((sub) => re.test(sub) || sub === bare);
 }
 
+/**
+ * A model of the documented Read rules: gitignore-style paths, where "./" is the project root,
+ * "**\/" matches zero or more folders, "*" stays inside one folder and [aA] is a character class.
+ */
+export function readRuleMatches(rule, path) {
+  const m = /^Read\(\.\/(.*)\)$/.exec(rule);
+  if (!m) return false;
+  const re = m[1].split(/(\*\*\/|\*|\[[^\]]+\])/).map((p) => {
+    if (p === '**/') return '(?:.*/)?';
+    if (p === '*') return '[^/]*';
+    if (/^\[.+\]$/.test(p)) return p;
+    return p.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+  }).join('');
+  return new RegExp(`^${re}$`).test(path);
+}
+
 export function decide(permissions, command) {
   for (const kind of ['deny', 'ask', 'allow']) {
     if ((permissions[kind] || []).some((r) => bashRuleMatches(r, command))) return kind;
@@ -47,6 +63,16 @@ test('Claude settings are strict JSON with no blanket allows', { skip: !existsSy
   assert.equal(permissions.defaultMode, undefined, 'do not set a default mode in the shared file');
 });
 
+test('Claude settings deny secret reads in any case and folder', { skip: !existsSync(claudePath) }, () => {
+  const { permissions } = JSON.parse(readFileSync(claudePath, 'utf8'));
+  const denied = (path) => permissions.deny.some((r) => readRuleMatches(r, path));
+  for (const p of ['.env', '.ENV', '.Env.local', 'apps/api/.env.production', 'secrets.json', 'config/Secrets.JSON',
+    'id_rsa', 'keys/ID_RSA', 'deploy/id_ed25519', 'certs/server.PEM', 'tls/site.key', 'a/b.P12']) {
+    assert.ok(denied(p), `Read(${p}) should be denied`);
+  }
+  for (const p of ['README.md', 'src/env.ts', 'docs/keys.md', 'id_rsa.pub', 'secrets.json.md']) assert.ok(!denied(p), `Read(${p}) should be allowed`);
+});
+
 test('Claude settings deny the bypasses wherever the flag sits', { skip: !existsSync(claudePath) }, () => {
   const { permissions } = JSON.parse(readFileSync(claudePath, 'utf8'));
   const expect = {
@@ -62,13 +88,18 @@ test('Claude settings deny the bypasses wherever the flag sits', { skip: !exists
       'git diff --no-index /dev/null ../.env', 'git diff --stat --no-index a b',
       'git show HEAD:.env', 'git show main:config/.env.local', 'git show HEAD:certs/server.pem', 'git show HEAD:id.key',
       'git log -p -- .env', 'git diff HEAD~3 -- config/.env.local',
-      'git log > /tmp/out.txt', 'git log -p >> log.txt', 'git diff main > patch.diff',
+      'git log > /tmp/out.txt', 'git log -p >> log.txt', 'git diff main > patch.diff', 'git log >out.txt',
+      'git diff >patch.diff', 'git log 1>out.txt', 'git log &>out.txt', 'git log>>out.txt',
+      'git cat-file -p HEAD:.env', 'git cat-file -p main:config/.env.local', 'git cat-file blob HEAD:tls/site.key',
+      'git grep sk-', 'git grep -n AKIA', 'git grep -e ghp_ HEAD~5', 'git grep "BEGIN RSA PRIVATE KEY"', 'git grep -i api_key',
+      'git grep --untracked TOKEN', 'git config unset core.hooksPath', 'git config unset --all core.hookspath',
       'rm -rf node_modules', 'rm -fr dist',
     ],
     ask: ['git push', 'git push -u origin grok/topic', 'npm install left-pad', 'gh pr create', 'curl https://example.com'],
     allow: [
       'npm test', 'git status', 'git diff', 'git diff --stat main', 'git log --oneline -5', 'git log -n 5', 'git show HEAD',
       'git config --get core.hooksPath', 'git show HEAD:README.md', 'git status 2>&1',
+      'git log --format="%h -> %s"', 'git log --oneline --format=%h->%s', 'git diff -- .env.example', 'git diff --stat 2>&1',
     ],
   };
   for (const [want, commands] of Object.entries(expect)) {
@@ -81,7 +112,9 @@ test('known gaps stay written down', { skip: !existsSync(claudePath) }, () => {
   const { permissions } = JSON.parse(readFileSync(claudePath, 'utf8'));
   const gaps = [
     'git -C . push --force', 'git commit -anm x', '/usr/bin/git push --force',
-    'git log >out.txt', 'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=x git commit -m x',
+    'git log>out.txt', 'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=x git commit -m x',
+    'git config core.HOOKSPATH x', 'git log -p', 'git log -S AKIA -p', 'git log -G "sk-" -p', 'git diff HEAD~1 -- .env.prod',
+    'git grep -e s"k-"',
   ];
   for (const c of gaps) {
     assert.notEqual(decide(permissions, c), 'deny', c);
