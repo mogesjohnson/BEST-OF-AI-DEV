@@ -1,0 +1,10 @@
+{
+  "name": "best-of-ai-dev",
+  "private": true,
+  "type": "module",
+  "description": "Moges Johnson's template and source of truth for AI-first development.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test scripts/test/ && node scripts/check/template-sync.mjs"
+  }
+}
