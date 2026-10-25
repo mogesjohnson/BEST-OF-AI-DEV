@@ -13,7 +13,7 @@ test('Claude settings are strict JSON and keep the safety denies', { skip: !exis
     assert.ok(permissions.deny.includes(rule), `deny is missing ${rule}`);
   }
   assert.ok(permissions.ask.includes('Bash(git push *)'), 'pushing must ask');
-  const wide = permissions.allow.filter((r) => /^(Bash|Edit|Write)(\(\*\))?$/.test(r) || r === 'Bash(*)');
+  const wide = permissions.allow.filter((r) => /^(Bash|Edit|Write)(\(\*[ *]*\))?$/.test(r));
   assert.deepEqual(wide, [], 'allow must not contain blanket Bash, Edit or Write');
   assert.equal(permissions.defaultMode, undefined, 'do not set a default mode in the shared file');
 });
