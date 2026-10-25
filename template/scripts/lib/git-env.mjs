@@ -5,6 +5,8 @@
 // somewhere else (a test's throwaway repo, a build step) silently operates on the REAL
 // repo instead: "git init" + "git config" set core.bare and user.name on it, and
 // "git switch" moves the worktree. Strip them for every child that does not need them.
+// This also drops GIT_SSH_COMMAND, GIT_ASKPASS and GIT_CONFIG_*; a check that needs
+// them must set them itself or be marked gitEnv: true in hooks/run-checks.mjs.
 
 /** A copy of env without any GIT_* variable. */
 export function withoutGitEnv(env = process.env) {

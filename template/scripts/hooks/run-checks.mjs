@@ -35,12 +35,12 @@ export function plan(hook, scriptsDir) {
   return [...(FLOOR[hook] || []), ...(REPO[hook] || [])].map((c) => ({ ...c, run: c.run.replaceAll('{scripts}', scriptsDir) }));
 }
 
-/** exit 0 pass; the check's blockedExit code means it could not run (reported, not fatal). */
 /** Hook variables (GIT_DIR, GIT_INDEX_FILE...) reach only checks that ask for them. */
 export function checkEnv(check, env = process.env) {
   return check.gitEnv ? { ...env } : withoutGitEnv(env);
 }
 
+/** exit 0 pass; the check's blockedExit code means it could not run (reported, not fatal). */
 export function verdict(check, status) {
   if (status === 0) return 'pass';
   if (check.blockedExit !== undefined && status === check.blockedExit) return 'blocked';
