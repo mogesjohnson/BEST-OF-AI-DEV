@@ -10,7 +10,7 @@ alongside it. None of them adds rules of its own.
 | --- | --- | --- |
 | Codex | `AGENTS.md` | `.codex/config.toml`, used only after you trust the project |
 | Claude Code | `CLAUDE.md`, which imports `@AGENTS.md` | `.claude/settings.json`; personal overrides in `.claude/settings.local.json` (git-ignored) |
-| Grok Build | `AGENTS.md` and `CLAUDE.md` in the same folder, both loaded; `@` lines are not expanded | `.claude/settings.json` (read and translated), or `.grok/config.toml` `[permission]`. Both need folder trust |
+| Grok Build | `AGENTS.md` and `CLAUDE.md` in the same folder, both loaded. Its docs do not mention `@` imports, so keep rules out of `CLAUDE.md` | `.claude/settings.json` (read and translated), or `.grok/config.toml` `[permission]`. Both need folder trust |
 | Gemini CLI | `GEMINI.md`, which imports `@AGENTS.md` | `.gemini/settings.json` |
 | Antigravity | `AGENTS.md` and `GEMINI.md`, both loaded. `@AGENTS.md` here is a path reference, not an import, so nothing loads twice | its own settings; this template ships none |
 | Cursor | `AGENTS.md` | the editor's own settings |
