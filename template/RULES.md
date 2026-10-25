@@ -19,7 +19,8 @@ private agent histories or machine config unless the task says so.
 
 **R3. Ask before high-impact changes.** New dependencies, CI or workflow edits, auth,
 billing, data deletion, public API changes and license changes need the owner's yes first.
-*Enforced by:* CODEOWNERS on `.github/`, `package.json`, lockfiles. Honor for the rest.
+*Enforced by:* CODEOWNERS on `.github/`, `package.json` and lockfiles, which only binds when the
+`main` ruleset requires code-owner review. Honor for the rest.
 
 ## Git
 
