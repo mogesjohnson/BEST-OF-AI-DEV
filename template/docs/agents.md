@@ -34,8 +34,9 @@ statement of intent that catches honest mistakes. Real isolation comes from:
 
 1. one worktree per agent, so a bad command damages one branch;
 2. Codex's sandbox, or a container or VM for anything you would not run yourself;
-3. server-side rules that no local config can skip: branch protection, required `pr-checks`,
-   and an agent identity that cannot approve its own PR.
+3. server-side rules that no local config can skip: a `main` ruleset with required `pr-checks`,
+   no force pushes, and a required review by an identity other than the agent's. A new repo has
+   none of these until you create them, and the review rule is empty while agents push as you.
 
 Paths outside the repo (`~/.ssh`, cloud credentials) belong in your user-level settings, not
 in a committed file.
