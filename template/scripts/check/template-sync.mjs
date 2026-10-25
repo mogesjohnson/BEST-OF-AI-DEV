@@ -9,7 +9,7 @@
 //   tail:  a line containing "REPO-SPECIFIC-BELOW" and everything after it
 // Exit 0 when in sync, 1 on drift, 2 on usage errors.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { join, relative, sep, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Template files a repo may skip, with the reason. Keep this list short.
@@ -91,6 +91,7 @@ function main(argv) {
   return 1;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// Case-insensitive compare: on Windows the drive letter case can differ.
+if (process.argv[1] && resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase()) {
   process.exitCode = main(process.argv.slice(2));
 }
