@@ -1,0 +1,49 @@
+# BEST-OF-AI-DEV template v1. Fast PR gates; no install step, about 20 seconds.
+# This is the workflow to mark required in the main ruleset: it runs on every PR.
+# Title and body reach the scripts through env vars. Never interpolate them into run:
+# lines, because a PR title is attacker-controlled text.
+name: pr-checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      # REPO-SPECIFIC: where the checks live.
+      SCRIPTS: template/scripts
+      # /REPO-SPECIFIC
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Title, body and commit messages
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node "$SCRIPTS/check/pr-format.mjs"
+      - name: Size (lines, never commits)
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: node "$SCRIPTS/check/pr-size.mjs"
+      - name: Secrets and personal paths
+        run: node "$SCRIPTS/check/secrets.mjs" --all
+      - name: Template drift (repos made from BEST-OF-AI-DEV)
+        # REPO-SPECIFIC: point --template at a checkout of the template, or delete this step.
+        # This repo is the template: compare template/ with the root.
+        run: node "$SCRIPTS/check/template-sync.mjs" --skip scripts/
+        # /REPO-SPECIFIC
