@@ -146,3 +146,9 @@
 .bd-edit a:hover {
   color: var(--bd-text);
 }
+/* Touch screens have no hover, so the anchors would never show. */
+@media (hover: none) {
+  .bd-anchor {
+    opacity: 1;
+  }
+}
