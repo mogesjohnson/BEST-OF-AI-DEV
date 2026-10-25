@@ -20,6 +20,12 @@ export const OPTIONAL = new Map([
   ['optional/', 'opt-in extras; copy only what you use'],
 ]);
 
+// Starter files: a repo must have one, but owns its content. JSON has no comments, so
+// REPO-SPECIFIC blocks cannot mark the parts that differ.
+export const SEEDED = new Map([
+  ['package.json', 'starter only; each repo owns its name, scripts and dependencies'],
+]);
+
 export function stripRepoSpecific(text) {
   const out = [];
   let inBlock = false;
@@ -68,6 +74,7 @@ export function compare(templateDir, repoDir, skip = []) {
       if (!isOptional(path)) problems.push(`missing: ${path}`);
       continue;
     }
+    if (SEEDED.has(path)) continue;
     const want = stripRepoSpecific(readFileSync(join(templateDir, path), 'utf8'));
     const have = stripRepoSpecific(readFileSync(target, 'utf8'));
     if (want !== have) problems.push(`differs: ${path}`);
