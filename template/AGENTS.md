@@ -33,7 +33,8 @@ Run these from the repo root. They are the only definition of "checks pass".
 2. One task, one branch, one worktree: `<agent>/<short-topic>`, off fresh `main`.
 3. Small PRs. The size gate fails above 600 changed lines (lockfiles excluded); aim under 400.
 4. Conventional Commits: lowercase `type(scope): subject`, at most 72 characters. The hook checks it.
-   End each commit with `Refs: #N` (or the task file) and `Agent: <your name>` trailers.
+   End each commit with `Refs: #N` (or the task file) and `Agent: <your name>` trailers;
+   the hook does not check trailers.
 5. The PR template is the report. Fill every section; untick what you did not check.
 6. The author never reviews or merges their own PR. See RULES.md R6.
 7. Merge only when `gh pr checks <n> --watch --fail-fast` is green. See RULES.md R15.
