@@ -6,9 +6,9 @@ Deciders: Grok Bot (proposed); Moges Johnson to accept or reject
 
 ## Context
 
-Review quality drops as diffs grow, and agents produce large diffs cheaply. The owner's obsidian
-WORKFLOW.md sets a 400-line PR budget that counts lockfiles, plus 6 files per PR and 200 lines or
-4 files per commit, enforced only in prose. Counting commits or files punishes good history and
+Review quality drops as diffs grow, and agents produce large diffs cheaply. One of the owner's
+private repos sets a 400-line PR budget that counts lockfiles, plus file-count and per-commit
+limits, all enforced only in prose. Counting commits or files punishes good history and
 rewards squashing.
 
 ## Decision
@@ -20,7 +20,7 @@ source maps, generated folders and byte-identical template mirrors. 400 lines pr
 ## Options considered
 
 - **Chosen:** lines with a soft target and a hard limit.
-- **Rejected:** a hard 400, as in obsidian. Honest refactors and test fixtures hit it often, and then people split PRs in ways that do not review well.
+- **Rejected:** a hard 400-line limit, as in that private repo. Honest refactors and test fixtures hit it often, and then people split PRs in ways that do not review well.
 - **Rejected:** file and commit counts. They are easy to game and say nothing about review load.
 
 ## Consequences
