@@ -7,7 +7,7 @@
 // even after a failure, so one run shows everything that is wrong. "{scripts}" in a
 // command is this scripts/ directory, so the same list works in any layout.
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { withoutGitEnv } from '../lib/git-env.mjs';
@@ -16,7 +16,8 @@ import { withoutGitEnv } from '../lib/git-env.mjs';
 const FLOOR = {
   // gitEnv: the staged scan must see GIT_INDEX_FILE ("git commit <path>" uses a temp index).
   'pre-commit': [{ name: 'secrets', run: 'node {scripts}/check/secrets.mjs --staged', gitEnv: true }],
-  'pre-push': [{ name: 'pr size', run: 'node {scripts}/check/pr-size.mjs', blockedExit: 2 }],
+  // stdin: gets the refs git is pushing, so "git push origin other-branch" checks other-branch.
+  'pre-push': [{ name: 'pr size', run: 'node {scripts}/check/pr-size.mjs --stdin-refs', blockedExit: 2, stdin: true }],
 };
 
 // REPO-SPECIFIC: your repo's fast checks. pre-commit should stay under ~10 seconds;
@@ -47,6 +48,12 @@ export function verdict(check, status) {
   return 'fail';
 }
 
+/** git feeds pre-push the refs being pushed on stdin. Read it once; a manual run has none. */
+function hookInput(hook) {
+  if (hook !== 'pre-push' || process.stdin.isTTY) return '';
+  try { return readFileSync(0, 'utf8'); } catch { return ''; }
+}
+
 function main(argv) {
   const hook = argv[0];
   if (!FLOOR[hook]) {
@@ -54,6 +61,7 @@ function main(argv) {
     return 2;
   }
   const scripts = relative(process.cwd(), fileURLToPath(new URL('..', import.meta.url))).split('\\').join('/') || '.';
+  const input = hookInput(hook);
   const results = [];
   for (const check of plan(hook, scripts)) {
     if (check.needs && !existsSync(check.needs)) {
@@ -61,7 +69,8 @@ function main(argv) {
       continue;
     }
     const started = Date.now();
-    const r = spawnSync(check.run, { shell: true, stdio: 'inherit', env: checkEnv(check) });
+    const io = check.stdin ? { input, stdio: ['pipe', 'inherit', 'inherit'] } : { stdio: 'inherit' };
+    const r = spawnSync(check.run, { shell: true, ...io, env: checkEnv(check) });
     const v = verdict(check, r.status ?? 1);
     results.push(v);
     console.log(`${hook}: ${v.padEnd(7)} ${check.name} (${Date.now() - started} ms)`);
