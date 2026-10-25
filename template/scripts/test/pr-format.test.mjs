@@ -1,9 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { checkBody, parseLog, SECTIONS } from '../check/pr-format.mjs';
+import { checkBody, isRevertPr, parseLog, SECTIONS } from '../check/pr-format.mjs';
 import { checkMessage, PR_EXEMPT } from '../check/commit-format.mjs';
 import { withoutGitEnv } from '../lib/git-env.mjs';
 
@@ -55,9 +57,43 @@ test('Dependabot PRs are skipped; others with its title are not', () => {
   assert.equal(gate({ PR_AUTHOR: 'someone', PR_TITLE: title, PR_BODY: 'Bumps lodash.' }).status, 1);
 });
 
-test('a GitHub revert PR passes with its generated body', () => {
-  assert.equal(gate({ PR_TITLE: 'Revert "feat: add x"', PR_BODY: 'Reverts owner/repo#12' }).status, 0);
-  assert.equal(gate({ PR_TITLE: 'feat: add x', PR_BODY: 'Reverts owner/repo#12' }).status, 1, 'only with a revert title');
+const sha = 'a'.repeat(40);
+const rev = { sha, message: `Revert "feat: add x"\n\nThis reverts commit ${sha}.\n` };
+const plain = { sha, message: 'feat: add y\n\nRefs: #1\n' };
+
+test('the revert exemption needs the title, the exact body and only revert commits', () => {
+  const t = 'Revert "feat: add x"';
+  assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [rev], 'owner/repo'), true);
+  assert.equal(isRevertPr(t, 'Reverts owner/repo#12\r\n', [rev], undefined), true, 'no repo known locally');
+  assert.equal(isRevertPr('feat: add x', 'Reverts owner/repo#12', [rev], 'owner/repo'), false, 'needs a revert title');
+  assert.equal(isRevertPr(t, 'Reverts owner/repo#12\n\nAlso adds y.', [rev], 'owner/repo'), false, 'body must be only the line');
+  assert.equal(isRevertPr(t, 'Reverts other/repo#12', [rev], 'owner/repo'), false, 'must name this repo');
+  assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [rev, plain], 'owner/repo'), false, 'every commit must be a revert');
+  assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [], 'owner/repo'), false, 'no commits, no exemption');
+  const sha256 = { sha, message: `Revert "feat: add x"\n\nThis reverts commit ${'b'.repeat(64)}.\n` };
+  assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [sha256], 'owner/repo'), true, 'SHA-256 repos too');
+  const short = { sha, message: 'Revert "feat: add x"\n\nThis reverts commit abc1234.\n' };
+  assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [short], 'owner/repo'), false, 'a short sha is hand-written');
+});
+
+test('a real git revert passes the gate with the generated body', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'bod-revert-'));
+  try {
+    const g = (...a) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid', ...a], { cwd: dir, env: withoutGitEnv(), encoding: 'utf8' });
+    g('init', '-q', '-b', 'main');
+    g('commit', '-q', '--allow-empty', '-m', 'chore: start', '-m', 'Refs: #1');
+    writeFileSync(join(dir, 'x.txt'), 'x');
+    g('add', '.');
+    g('commit', '-q', '-m', 'feat: add x', '-m', 'Refs: #1');
+    g('revert', '--no-edit', 'HEAD');
+    const run = (env, base = 'HEAD~1') => spawnSync(process.execPath, [script, '--base', base], { cwd: dir, encoding: 'utf8', env: { ...withoutGitEnv(), ...env } });
+    assert.equal(run({ PR_TITLE: 'Revert "feat: add x"', PR_BODY: 'Reverts owner/repo#12', GITHUB_REPOSITORY: 'owner/repo' }).status, 0);
+    const two = run({ PR_TITLE: 'Revert "feat: add x"', PR_BODY: 'Reverts owner/repo#12' }, 'HEAD~2');
+    assert.equal(two.status, 1, 'a non-revert commit in the PR brings the body check back');
+    assert.match(two.stderr, /Summary/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('the PR gate rejects fixup!, squash! and Merge subjects', () => {

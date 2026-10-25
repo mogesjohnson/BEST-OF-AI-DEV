@@ -4,7 +4,10 @@
 //   PR_TITLE=... PR_BODY=... [PR_AUTHOR=...] node scripts/check/pr-format.mjs [--base <ref>]
 //
 // Skipped for Dependabot (PR_AUTHOR dependabot[bot]): its titles and bodies are generated.
-// A GitHub revert PR (title 'Revert "..."', body "Reverts owner/repo#N") skips the body check.
+// A GitHub revert PR skips the body check, but only when all three hold: the title is
+// 'Revert "..."', the whole body is "Reverts <this repo>#N", and every commit is a git
+// revert ('Revert "..."' with "This reverts commit <sha>."). A hand-written PR that only
+// copies the title and body still gets the full check.
 // Commits are checked strictly: fixup!, squash! and "Merge ..." subjects fail here.
 //
 // CI passes the title and body through env vars, never by pasting them into a shell line.
@@ -20,7 +23,16 @@ const EMPTY_STATUS = /^\s*[-*]\s*(pass|fail|blocked|not_run)\s*:?\s*$/m;
 // Sections that must say something once comments are removed ("none" counts).
 const NEEDS_TEXT = ['Summary', 'Size', 'Risks and follow-ups'];
 export const DEPENDABOT = 'dependabot[bot]';
-export const REVERT_BODY = /^Reverts [\w.-]+\/[\w.-]+#\d+\s*$/m;
+export const REVERT_BODY = /^Reverts ([\w.-]+\/[\w.-]+)#\d+$/;
+export const REVERT_COMMIT = /^Revert "[^\n]*"\n(?:[\s\S]*\n)?This reverts commit (?:[0-9a-f]{64}|[0-9a-f]{40})\./;
+
+/** True only for a PR GitHub's Revert button could have made. */
+export function isRevertPr(title, body, commits, repo) {
+  const m = REVERT_BODY.exec((body || '').replace(/\r/g, '').trim());
+  if (title === undefined || !PR_EXEMPT.test(title) || !m) return false;
+  if (repo && m[1].toLowerCase() !== repo.toLowerCase()) return false;
+  return commits.length > 0 && commits.every((c) => REVERT_COMMIT.test(c.message.replace(/\r/g, '')));
+}
 
 function section(text, name) {
   return (text.split(new RegExp(`^##\\s+${name}\\s*$`, 'mi'))[1] || '').split(/^##\s/m)[0];
@@ -67,8 +79,6 @@ function main(argv) {
   const title = process.env.PR_TITLE;
   const body = process.env.PR_BODY;
   if (title !== undefined) problems.push(...checkSubject(title, PR_EXEMPT).map((p) => `title: ${p}`));
-  const revert = title !== undefined && PR_EXEMPT.test(title) && REVERT_BODY.test(body || '');
-  if (body !== undefined && !revert) problems.push(...checkBody(body));
   let commits;
   try {
     commits = parseLog(execFileSync('git', ['log', '--no-merges', '--format=%H%x00%B%x1e', `${base}..${process.env.HEAD_SHA || 'HEAD'}`], { encoding: 'utf8' }));
@@ -76,6 +86,8 @@ function main(argv) {
     console.error(`pr-format: cannot read commits since ${base}. Fetch it first. (${err.message.split('\n')[0]})`);
     return 2;
   }
+  const revert = isRevertPr(title, body, commits, process.env.GITHUB_REPOSITORY);
+  if (body !== undefined && !revert) problems.push(...checkBody(body));
   for (const c of commits) problems.push(...checkMessage(c.message, '#', PR_EXEMPT).map((p) => `commit ${c.sha.slice(0, 7)}: ${p}`));
   if (problems.length) {
     console.error(`pr-format: fail (${problems.length})`);
