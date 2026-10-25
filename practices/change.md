@@ -85,8 +85,10 @@ repos.
 **Why change:** without CI, "it passed on my machine" is the only evidence, and agents can't
 see a red check.
 
-**Instead:** use the template's `ci.yml`. It runs one `npm test`, filtered by path, in about
-10 seconds. Public repos run it for free. See [cost and CI budget](../docs/why/09-cost-and-ci-budget.md).
+**Instead:** use the template's `ci.yml`: one Linux job that installs (`npm ci` when there is a
+lockfile), then runs lint, typecheck, test and build when those scripts exist. Docs-only
+changes skip it, a new push cancels the old run, and Windows or macOS run only on demand.
+This repo's copy runs just `npm test`, in about 10 seconds. Public repos run it for free. See [cost and CI budget](../docs/why/09-cost-and-ci-budget.md).
 
 ## 8. Keys committed without a note
 
