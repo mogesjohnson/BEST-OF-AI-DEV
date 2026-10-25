@@ -59,7 +59,7 @@ The commit-msg hook points `#63 ...` subjects at the footer. It does not reject 
 
 | Repo | Change |
 | --- | --- |
-| shadow-army, shadow-docs | Move the leading `#N` into `Refs: #N`, keep the branch names, and choose a type for each change. Merge-commit subjects are excluded from the check, so the custom `#63 Merge PR #74: ...` style can stay. |
+| shadow-army, shadow-docs | Move the leading `#N` into `Refs: #N`, keep the branch names, and choose a type for each change. The PR gate skips merge commits, but the local commit-msg hook also runs on `git merge`, and it exempts only subjects that start with `Merge `. So the custom `#63 Merge PR #74: ...` subjects become `Merge PR #74: ...`, with `Refs: #63` in the body. |
 | post-it-board | Add types to subjects and keep the `<type>/<topic>` branches, or move to `<handle>/<topic>`. |
 | trace-workbench | Already compliant. Optionally add scopes and `Refs:` footers. |
 | Private repos | Same steps. Map finding IDs to `Refs: <id>`. Run `template-sync` after copying the hook. |
