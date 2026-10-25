@@ -3,13 +3,15 @@
 //
 //   node scripts/check/template-sync.mjs                      (inside BEST-OF-AI-DEV: template/ vs root)
 //   node scripts/check/template-sync.mjs --template <dir>     (any repo: <dir> vs this repo)
+//   --skip <prefix>  (repeatable) template paths this repo provides another way; say why where
+//                    you pass it. BEST-OF-AI-DEV skips scripts/ because it runs template/scripts.
 //
 // Repo-specific text is ignored in two forms, in any comment syntax:
 //   block: a line containing "REPO-SPECIFIC:" through a line containing "/REPO-SPECIFIC"
 //   tail:  a line containing "REPO-SPECIFIC-BELOW" and everything after it
 // Exit 0 when in sync, 1 on drift, 2 on usage errors.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { join, relative, sep, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Template files a repo may skip, with the reason. Keep this list short.
@@ -57,9 +59,10 @@ export function isOptional(path) {
   return false;
 }
 
-export function compare(templateDir, repoDir) {
+export function compare(templateDir, repoDir, skip = []) {
   const problems = [];
   for (const path of listFiles(templateDir)) {
+    if (skip.some((prefix) => path.startsWith(prefix))) continue;
     const target = join(repoDir, path);
     if (!existsSync(target)) {
       if (!isOptional(path)) problems.push(`missing: ${path}`);
@@ -80,7 +83,8 @@ function main(argv) {
     console.error(`template-sync: template directory not found: ${templateDir ?? '(none)'}`);
     return 2;
   }
-  const problems = compare(templateDir, root);
+  const skip = argv.flatMap((arg, i) => (argv[i - 1] === '--skip' ? [arg] : []));
+  const problems = compare(templateDir, root, skip);
   if (problems.length === 0) {
     console.log('template-sync: pass (all shared files match outside REPO-SPECIFIC blocks)');
     return 0;
@@ -91,6 +95,7 @@ function main(argv) {
   return 1;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// Case-insensitive compare: on Windows the drive letter case can differ.
+if (process.argv[1] && resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase()) {
   process.exitCode = main(process.argv.slice(2));
 }

@@ -16,8 +16,9 @@ and checks in `template/`, the reasoning in `practices/`, and a docs site in `do
 Run these from the repo root. They are the only definition of "checks pass".
 
 <!-- REPO-SPECIFIC: replace with the real commands. Delete any that do not exist. -->
-- Test the scripts and hooks: `npm test` (Node 20+, no install needed)
-- Check template sync: `node scripts/check/template-sync.mjs`
+- Install hooks once per clone: `npm install` (sets `core.hooksPath`; no dependencies)
+- Test the scripts, hooks and template sync: `npm test` (Node 20+)
+- Check PR size before pushing: `npm run check:size`
 <!-- /REPO-SPECIFIC -->
 
 ## Where things live
@@ -25,7 +26,7 @@ Run these from the repo root. They are the only definition of "checks pass".
 <!-- REPO-SPECIFIC: five to ten lines. Path, then what it holds. No full tree. -->
 - `template/`: the files a new repo copies. Root files mirror them; `template-sync` checks that.
 - `practices/`: what to keep and what to change, each with its reason and source repo.
-- `scripts/`: checks shared with the template (`scripts/check/`) and their tests.
+- `template/scripts/`: the checks and hooks. This repo runs them in place; there is no root copy.
 <!-- /REPO-SPECIFIC -->
 
 ## How work flows
