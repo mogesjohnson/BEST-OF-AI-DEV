@@ -7,11 +7,13 @@ import { cpSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { withoutGitEnv } from '../lib/git-env.mjs';
 
 const root = fileURLToPath(new URL('../..', import.meta.url));
 
+// withoutGitEnv: when this runs from a pre-push hook, GIT_DIR points at the real repo.
 function run(cwd, cmd, args, env = {}) {
-  return spawnSync(cmd, args, { cwd, encoding: 'utf8', env: { ...process.env, ...env } });
+  return spawnSync(cmd, args, { cwd, encoding: 'utf8', env: { ...withoutGitEnv(), ...env } });
 }
 
 test('hooks and size gate work in a fresh repo with a spaced path', () => {
