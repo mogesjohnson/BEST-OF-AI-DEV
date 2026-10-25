@@ -29,9 +29,10 @@ have nobody to wait for.
 
 ## Evidence
 
-- GitHub doesn't let authors approve their own pull requests, and a ruleset can require
-  "an approval from someone other than the last person to push".
-  ([Available rules for rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets))
+- GitHub's docs say "pull request authors cannot approve their own pull requests"
+  ([Approving a pull request with required reviews](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/approving-a-pull-request-with-required-reviews)).
+  A ruleset can also require "an approval from someone other than the last person to push"
+  ([Available rules for rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets)).
 - The same page names the problem for agents. One required approval "usually means two people
   are involved", and "that assumption doesn't hold" when Copilot opens a PR under its own app
   identity, so GitHub adds an extra approval by default.
