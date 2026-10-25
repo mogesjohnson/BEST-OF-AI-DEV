@@ -16,6 +16,11 @@
   main worktree. Removal uses "git worktree remove" without --force, so Git refuses
   anything it considers dirty, even if this script got it wrong.
 
+  Git does NOT count ignored files as dirty: "git worktree remove" deletes a .env or a local
+  database without asking. So this script lists ignored files and keeps the worktree unless
+  you pass -Force. Ignored folders named in -Disposable (node_modules, dist and other build
+  output) do not count, because they can be rebuilt. Ignored files never match -Disposable.
+
   "Merged" means the branch tip is an ancestor of -Base. A squash or rebase merge leaves no
   ancestor, so those branches show up only once they pass -StaleDays. Run git fetch first
   so origin/main is current.
@@ -27,6 +32,9 @@
   powershell -ExecutionPolicy Bypass -File .\scripts\cleanup-worktrees.ps1
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File .\scripts\cleanup-worktrees.ps1 -Apply -DeleteBranches
+.EXAMPLE
+  powershell -ExecutionPolicy Bypass -File .\scripts\cleanup-worktrees.ps1 -Apply -Force
+  Also removes worktrees whose only leftovers are ignored files. Read the dry run first.
 #>
 [CmdletBinding()]
 param(
@@ -34,7 +42,9 @@ param(
   [int]$StaleDays = 14,
   [int]$MinIdleHours = 24,
   [string]$Base = 'origin/main',
-  [switch]$DeleteBranches
+  [switch]$DeleteBranches,
+  [switch]$Force,
+  [string[]]$Disposable = @('node_modules', '.next', 'dist', 'build', 'out', 'coverage', '.turbo', '.cache', 'target', '__pycache__')
 )
 
 $ErrorActionPreference = 'Continue'
@@ -126,6 +136,29 @@ for ($i = 0; $i -lt $records.Count; $i++) {
   }
 
   if (-not $reason) { Write-Output "  keep    $label (active)"; continue }
+
+  # Ignored files are deleted by "git worktree remove", so they count as dirty here.
+  $ignored = New-Object System.Collections.ArrayList
+  if ($reason -ne 'folder is gone') {
+    $ign = Invoke-Git @('-C', $wt.Path, 'status', '--porcelain', '--ignored')
+    if ($ign.Code -ne 0) { Write-Output "  keep    $label (git status --ignored failed)"; continue }
+    foreach ($l in $ign.Out) {
+      if ($l -notlike '!! *') { continue }
+      $p = $l.Substring(3).Trim('"')
+      $leaf = @($p.TrimEnd('/') -split '/')[-1]
+      if ($p.EndsWith('/') -and ($Disposable -contains $leaf)) { continue }
+      [void]$ignored.Add($p)
+    }
+  }
+  if ($ignored.Count -gt 0) {
+    $shown = @($ignored | Select-Object -First 5) -join ', '
+    if ($ignored.Count -gt 5) { $shown = "$shown and $($ignored.Count - 5) more" }
+    if (-not $Force) {
+      Write-Output "  keep    $label ($reason, but has ignored files: $shown. -Force removes them too)"
+      continue
+    }
+    $reason = "$reason; deletes ignored files: $shown"
+  }
   $candidates++
   if (-not $Apply) { Write-Output "  would remove $label ($reason)"; continue }
 
