@@ -23,6 +23,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\mcp-doctor.ps1
 
 `-ExecutionPolicy Bypass` applies to that one process. It does not change the machine policy.
 
+`test-windows.ps1` prints PASS, FAIL or SKIP per check and exits 1 on any FAIL. If a setup
+step fails (temp folder, copy, `git init`, `git config`, `setup-hooks.mjs`, a fixture commit),
+it prints `ABORT` and stops: checks in a half-built repo only produce noise. It clears `GIT_*`
+variables first, never runs npm, and never installs lefthook; that check is SKIP when lefthook
+is absent.
+
 ## 5.1 rules that agents break
 
 - **No `&&` or `||`.** They are parse errors in 5.1. Use separate lines, or
