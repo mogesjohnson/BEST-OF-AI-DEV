@@ -45,6 +45,8 @@ export function checkSubject(subject, exempt = EXEMPT) {
   if (!SUBJECT.test(subject)) {
     if (SUBJECT.test(subject.replace(/^[^:]*/, (head) => head.toLowerCase()))) {
       problems.push('type and scope must be lowercase, e.g. "fix(api): ..."');
+    } else if (/^#\d+\b/.test(subject)) {
+      problems.push('subject must start with the type, not the issue number: "fix(x): summary", then a "Refs: #N" footer');
     } else {
       problems.push(`subject must look like "type(scope): summary" with type one of: ${TYPES.join(', ')}`);
     }
