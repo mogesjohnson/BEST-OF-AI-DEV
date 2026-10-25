@@ -34,3 +34,4 @@ desktop.ini
 .idea/
 
 # REPO-SPECIFIC-BELOW: add repo entries after this line.
+site/next-env.d.ts
