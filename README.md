@@ -3,6 +3,9 @@
 Moges Johnson's template and source of truth for AI-first development: the practices worth
 keeping, drop-in agent rules for every new repo, and a docs site on why each practice matters.
 
+**Docs site: https://mogesjohnson.github.io/BEST-OF-AI-DEV/** (built from [`site/`](site), deployed
+to GitHub Pages on every push to `main`).
+
 Most of this repo was written by a coding agent through small, self-reviewed pull requests,
 under the rules it ships. The repo holds itself to the same template it offers, and the gaps
 are listed below instead of hidden.
@@ -16,7 +19,7 @@ are listed below instead of hidden.
 | [`docs/why/`](docs/why/index.md) | Eleven pages on why each practice exists, each with sources. |
 | [`docs/migrations/`](docs/migrations) | A plan for moving each of my repos onto the template. |
 | [`docs/decisions/`](docs/decisions) | Decision records for this repo, such as zero-install hooks and lines-not-commits for size. |
-| [`site/`](site) | A static Next.js site that renders `docs/why/`, styled after shadow-docs. |
+| [`site/`](site) | A static Next.js site that renders `docs/why/`, styled after shadow-docs. Live at https://mogesjohnson.github.io/BEST-OF-AI-DEV/. |
 
 This repo follows its own [`AGENTS.md`](AGENTS.md) and [`RULES.md`](RULES.md), which are the
 template's copies with this repo's slots filled in.

@@ -30,6 +30,13 @@ CI runs the same three commands in `.github/workflows/site.yml`, only when `site
 Pages for this repo, set `BASE_PATH=/BEST-OF-AI-DEV` before building. In PowerShell 5.1, run
 `$env:BASE_PATH = "/BEST-OF-AI-DEV"` on its own line, then `npm run build`.
 
+## Deploy
+
+`.github/workflows/pages.yml` builds with `BASE_PATH=/BEST-OF-AI-DEV` and publishes `site/out/` to
+https://mogesjohnson.github.io/BEST-OF-AI-DEV/ on every push to `main` that touches `site/` or
+`docs/why/`. Run it by hand from the Actions tab. Pages must use "GitHub Actions" as its source.
+`public/.nojekyll` stops Jekyll from hiding the `_next/` folder if Pages ever serves a branch.
+
 ## Page format
 
 Each page is `docs/why/NN-slug.md` with front matter:
