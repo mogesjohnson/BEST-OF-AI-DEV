@@ -52,6 +52,7 @@ https://github.com/mogesjohnson/BEST-OF-AI-DEV/blob/main/docs/why/04-review-iden
 
 **R7. Commits and PRs follow the format.** Conventional Commits with a lowercase type and scope
 (`fix(api): ...`), subject at most 72 characters, no closing keywords (`closes`, `fixes`, `resolves`). Link issues with `Refs: #12`.
+A commit written by an agent ends with an `Agent: <name>` trailer, so `git log` shows who wrote what (no hook checks this yet).
 Issues close only when a human confirms acceptance. Locally, `fixup!` and `Merge` subjects are
 fine; in a PR only `Revert "..."` is exempt, and Dependabot PRs skip the format gate.
 *Enforced by:* `.githooks/commit-msg` (skippable with `--no-verify`) and the `pr-checks` workflow,
