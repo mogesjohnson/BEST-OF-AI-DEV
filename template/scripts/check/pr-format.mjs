@@ -24,7 +24,7 @@ const EMPTY_STATUS = /^\s*[-*]\s*(pass|fail|blocked|not_run)\s*:?\s*$/m;
 const NEEDS_TEXT = ['Summary', 'Size', 'Risks and follow-ups'];
 export const DEPENDABOT = 'dependabot[bot]';
 export const REVERT_BODY = /^Reverts ([\w.-]+\/[\w.-]+)#\d+$/;
-export const REVERT_COMMIT = /^Revert "[^\n]*"\n(?:[\s\S]*\n)?This reverts commit [0-9a-f]{40}\./;
+export const REVERT_COMMIT = /^Revert "[^\n]*"\n(?:[\s\S]*\n)?This reverts commit (?:[0-9a-f]{64}|[0-9a-f]{40})\./;
 
 /** True only for a PR GitHub's Revert button could have made. */
 export function isRevertPr(title, body, commits, repo) {

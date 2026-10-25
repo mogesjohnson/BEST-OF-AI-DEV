@@ -70,6 +70,10 @@ test('the revert exemption needs the title, the exact body and only revert commi
   assert.equal(isRevertPr(t, 'Reverts other/repo#12', [rev], 'owner/repo'), false, 'must name this repo');
   assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [rev, plain], 'owner/repo'), false, 'every commit must be a revert');
   assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [], 'owner/repo'), false, 'no commits, no exemption');
+  const sha256 = { sha, message: `Revert "feat: add x"\n\nThis reverts commit ${'b'.repeat(64)}.\n` };
+  assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [sha256], 'owner/repo'), true, 'SHA-256 repos too');
+  const short = { sha, message: 'Revert "feat: add x"\n\nThis reverts commit abc1234.\n' };
+  assert.equal(isRevertPr(t, 'Reverts owner/repo#12', [short], 'owner/repo'), false, 'a short sha is hand-written');
 });
 
 test('a real git revert passes the gate with the generated body', () => {
