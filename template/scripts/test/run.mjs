@@ -6,8 +6,9 @@ import { spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { withoutGitEnv } from '../lib/git-env.mjs';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const files = readdirSync(here).filter((f) => f.endsWith('.test.mjs')).sort().map((f) => join(here, f));
-const r = spawnSync(process.execPath, ['--test', ...files], { stdio: 'inherit' });
+const r = spawnSync(process.execPath, ['--test', ...files], { stdio: 'inherit', env: withoutGitEnv() }); // see lib/git-env.mjs
 process.exit(r.status ?? 1);
