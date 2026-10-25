@@ -13,5 +13,6 @@ calls shadow-docs and trace-workbench private, but both are public now.
    `shadow-docs` submodule, set `submodules: true` on the checkout step.
 3. **Commit format.** New commits use `type(scope): subject` with `Refs: #N`. Old `[F<n>]`
    subjects stay as they are.
-4. **Secrets.** Run `scripts/check/secrets.mjs --all` once before adding the hooks, and fix
-   anything it finds in a separate PR.
+4. **Secrets.** Run `node scripts/check/secrets.mjs --all` right after copying `scripts/`,
+   before `npm install` runs `prepare` and turns the hooks on. Fix anything it finds in a
+   separate PR, or the first commit after the hooks are on will fail.
