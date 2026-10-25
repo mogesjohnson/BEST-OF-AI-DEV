@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { Marked } from "marked";
-import { GROUPS, type NavEntry } from "./site";
+import { GROUPS, REPO_URL, hrefOf, type NavEntry } from "./site";
 
 /**
  * The site has no content of its own. Every page is a Markdown file in ../docs/why, so the
@@ -34,6 +34,19 @@ export function parseFrontMatter(source: string): { data: Record<string, string>
   return { data, body: source.slice(m[0].length) };
 }
 
+const WHY_PREFIX = `${REPO_URL}/blob/main/docs/why/`;
+const WHY_FILE = /^(?:\d+-)?([a-z0-9-]+)\.md(#[\w-]+)?$/;
+
+/**
+ * Pages link to each other with full GitHub URLs, so the links work on GitHub. On the site,
+ * those links go to the rendered page instead. index.md maps to the home page.
+ */
+export function localHref(href: string, basePath = process.env.BASE_PATH || ""): string {
+  const m = href.startsWith(WHY_PREFIX) ? WHY_FILE.exec(href.slice(WHY_PREFIX.length)) : null;
+  if (!m) return href;
+  return `${basePath}${hrefOf(m[1] === "index" ? "" : m[1])}${m[2] ?? ""}`;
+}
+
 export const slugify = (text: string) =>
   text
     .toLowerCase()
@@ -58,6 +71,12 @@ export function render(body: string): { html: string; toc: TocItem[] } {
         const id = n ? `${base}-${n}` : base;
         if (depth === 2) toc.push({ id, title: inner.replace(/<[^>]+>/g, "") });
         return `<h${depth} id="${id}" class="bd-h${depth}">${inner}<a class="bd-anchor" href="#${id}" aria-label="Link to this section">#</a></h${depth}>\n`;
+      },
+      link({ href, title, tokens }) {
+        const text = this.parser.parseInline(tokens);
+        const attr = (v: string) => v.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+        const t = title ? ` title="${attr(title)}"` : "";
+        return `<a href="${attr(localHref(href))}"${t}>${text}</a>`;
       },
     },
   });

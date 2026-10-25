@@ -45,3 +45,8 @@ order: 1
 
 `group` picks the sidebar section; the known groups are listed in `src/lib/site.ts`. Every
 `##` heading shows up in "On this page". A `>` blockquote renders as a callout.
+
+Link to another page with its full GitHub URL, such as
+`https://github.com/mogesjohnson/BEST-OF-AI-DEV/blob/main/docs/why/01-small-prs.md`. On GitHub
+the link opens the file. On the site, `localHref` in `src/lib/pages.ts` rewrites it to the
+rendered page, `BASE_PATH` included.
