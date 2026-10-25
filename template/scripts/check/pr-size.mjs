@@ -89,6 +89,10 @@ function mirrorCheck(head) {
 function main(argv) {
   const i = argv.indexOf('--base');
   const base = i === -1 ? process.env.BASE_SHA || 'origin/main' : argv[i + 1];
+  if (!base || base.startsWith('--')) {
+    console.error('pr-size: usage: node scripts/check/pr-size.mjs [--base <ref>]');
+    return 2;
+  }
   const head = process.env.HEAD_SHA || 'HEAD';
   let rows;
   try {

@@ -42,6 +42,8 @@ test('hooks and size gate work in a fresh repo with a spaced path', () => {
     assert.equal(over.status, 1);
     assert.match(over.stdout, /700 changed lines .* 1 excluded/);
     assert.equal(size({ SIZE_EXCEPTION: 'test of the exception path' }).status, 0);
+    const usage = run(dir, process.execPath, ['scripts/check/pr-size.mjs', '--base']);
+    assert.equal(usage.status, 2, 'a missing --base value is a usage error, not a git error');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
