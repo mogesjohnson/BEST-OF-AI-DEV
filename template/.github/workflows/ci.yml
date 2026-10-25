@@ -38,9 +38,24 @@ jobs:
         with:
           node-version: 22
       # REPO-SPECIFIC: the same commands AGENTS.md lists. Keep this the only definition.
-      - run: npm ci
+      # npm ci needs a lockfile. Without one, install anyway and warn: commit the lockfile.
+      - name: Install
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          elif [ -f package.json ]; then
+            echo "::warning::No package-lock.json, so this install is not reproducible. Run npm install and commit the lockfile."
+            npm install --no-audit --no-fund
+          else
+            echo "::warning::No package.json; the npm steps below do nothing."
+          fi
       - run: npm run lint --if-present
+        if: hashFiles('package.json') != ''
       - run: npm run typecheck --if-present
+        if: hashFiles('package.json') != ''
       - run: npm test
+        if: hashFiles('package.json') != ''
       - run: npm run build --if-present
+        if: hashFiles('package.json') != ''
       # /REPO-SPECIFIC
