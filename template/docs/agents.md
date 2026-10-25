@@ -1,0 +1,44 @@
+<!-- BEST-OF-AI-DEV template v1. How each coding agent finds the rules and what it may do.
+     Keep this in sync with .claude/settings.json and .codex/config.toml. -->
+
+# Agent setup
+
+AGENTS.md is the only rules file. Every vendor file below either imports it or is read
+alongside it. None of them adds rules of its own.
+
+| Agent | Reads | Permissions live in |
+| --- | --- | --- |
+| Codex | `AGENTS.md` | `.codex/config.toml`, used only after you trust the project |
+| Claude Code | `CLAUDE.md`, which imports `@AGENTS.md` | `.claude/settings.json`; personal overrides in `.claude/settings.local.json` (git-ignored) |
+| Grok Build | `AGENTS.md` and `CLAUDE.md` in the same folder | its own settings. TODO(verify): a project-level permissions file |
+| Gemini CLI, Antigravity | `GEMINI.md`, which imports `@AGENTS.md` | `.gemini/settings.json`. TODO(verify): Antigravity resolves `@` imports the way Gemini CLI does |
+| Cursor | `AGENTS.md` | the editor's own settings |
+
+## What the committed configs do
+
+- **Claude Code** allows the repo's own check commands and read-only git. It asks before pushing,
+  installing packages, `gh`, `curl`, web fetches and edits to CI, hooks, scripts or
+  `package.json`. It denies reading `.env*` and key files, force-pushing, `--no-verify`,
+  `reset --hard`, changing `core.hooksPath` and `rm -rf`.
+  Deny and ask rules apply as soon as the file is in the repo. Allow rules wait until you trust the folder.
+- **Codex** runs in `workspace-write`: no writes outside the repo and no network from
+  commands. Web search uses the cached index. Variables named like keys, secrets or tokens are
+  stripped from the command environment; Codex's default keeps them.
+
+## What they do not do
+
+Deny lists are speed bumps, not a sandbox. `Bash(git push --force *)` does not match
+`git push origin +main` (only the broad `git push` ask rule catches that), `bash -c "..."`, or a
+script that runs git for the agent. Treat them as a
+statement of intent that catches honest mistakes. Real isolation comes from:
+
+1. one worktree per agent, so a bad command damages one branch;
+2. Codex's sandbox, or a container or VM for anything you would not run yourself;
+3. server-side rules that no local config can skip: branch protection, required `pr-checks`,
+   and an agent identity that cannot approve its own PR.
+
+Paths outside the repo (`~/.ssh`, cloud credentials) belong in your user-level settings, not
+in a committed file.
+
+<!-- REPO-SPECIFIC: tools, MCP servers or commands this repo adds, and why. -->
+<!-- /REPO-SPECIFIC -->
