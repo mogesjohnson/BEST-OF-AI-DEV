@@ -95,7 +95,7 @@ test('the revert exemption checks the reverted sha and the diff against git', ()
     g('switch', '-q', 'main');
     g('merge', '-q', '--no-ff', '-m', 'Merge pull request #12 from owner/feat', 'feat');
     const merged = g('rev-parse', 'HEAD');
-    const run = (base) => spawnSync(process.execPath, [script, '--base', base], { cwd: dir, encoding: 'utf8', env: { ...withoutGitEnv(), PR_TITLE: 'Revert "Merge pull request #12 from owner/feat"', PR_BODY: 'Reverts owner/repo#13' } });
+    const run = (base) => spawnSync(process.execPath, [script, '--base', base], { cwd: dir, encoding: 'utf8', env: { ...withoutGitEnv(), PR_TITLE: 'Revert "Merge pull request #12 from owner/feat"', PR_BODY: 'Reverts owner/repo#13', GITHUB_REPOSITORY: 'owner/repo' } });
     g('switch', '-q', '-c', 'real', merged);
     g('revert', '--no-edit', '-m', '1', merged);
     const real = run(merged);
