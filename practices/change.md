@@ -5,8 +5,9 @@ what replaces it and what the replacement costs.
 
 ## 1. Rules spread over several files
 
-**Seen in:** shadow-army has `CLAUDE.md`, `agent.md`, `rules.md` and `orchestratorDelegate.md`,
-and no `AGENTS.md`. Each agent tool reads a different subset.
+**Seen in:** shadow-army keeps rules in `CLAUDE.md`, `agent.md` and `rules.md`, and has no
+`AGENTS.md`. Only `CLAUDE.md` loads on its own, and only in Claude Code. (`orchestratorDelegate.md`
+is routing policy that the code reads, so it rightly stays a separate file.)
 
 **Why change:** two copies of a rule drift, and an agent follows whichever copy it loaded.
 
