@@ -9,7 +9,14 @@ on:
   push:
     branches: [main]
     paths: ['site/**', 'docs/why/**', '.github/workflows/site.yml']
+  # Run by hand on windows-latest to check the build on Windows (paths, line endings).
   workflow_dispatch:
+    inputs:
+      os:
+        description: Runner to build on
+        type: choice
+        options: [ubuntu-latest, windows-latest, macos-latest]
+        default: ubuntu-latest
 
 permissions:
   contents: read
@@ -20,7 +27,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.os || 'ubuntu-latest' }}
     timeout-minutes: 10
     defaults:
       run:
