@@ -9,6 +9,7 @@
   "scripts": {
     "prepare": "node template/scripts/setup-hooks.mjs",
     "test": "node template/scripts/test/run.mjs && node template/scripts/check/template-sync.mjs --skip scripts/",
-    "check:size": "node template/scripts/check/pr-size.mjs"
+    "check:size": "node template/scripts/check/pr-size.mjs",
+    "test:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File template/scripts/test-windows.ps1"
   }
 }
