@@ -8,18 +8,19 @@
 // Counts added + deleted lines in `git diff BASE...HEAD`, so later commits that undo earlier
 // ones do not inflate the total. Excludes lockfiles, generated files and, in a repo with a
 // template/ mirror, root files byte-identical to their template/ copy.
-// Exception: label "size-exception" plus a "Size exception: <reason>" line in the PR body
-// (CI reads PR_LABELS and PR_BODY). SIZE_EXCEPTION="<reason>" works for a local push only.
-// PR_SIZE_LIMIT and PR_SIZE_TARGET can lower the numbers for one run, never raise them.
+// One hard limit, no warning tier (docs/decisions/0003). Over it fails.
+// Exception, rare and the owner's call (a whole revamp, say): label "size-exception" plus a
+// "Size exception: <reason>" line in the PR body (CI reads PR_LABELS and PR_BODY).
+// SIZE_EXCEPTION="<reason>" works for a local push only.
+// PR_SIZE_LIMIT can lower the limit for one run, never raise it.
 // Exit 0 pass, 1 over the limit, 2 usage or git error.
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// REPO-SPECIFIC: the hard limit and soft target. Change them here, in review, not per run.
-const MAX_LIMIT = 600;
-const MAX_TARGET = 400;
+// REPO-SPECIFIC: the hard limit. Change it here, in review, not per run.
+const MAX_LIMIT = 400;
 // /REPO-SPECIFIC
 
 /** An env override can only tighten a number, never loosen it. */
@@ -28,7 +29,6 @@ export function tighten(value, max) {
   return Number.isFinite(n) && n > 0 && n < max ? n : max;
 }
 export const LIMIT = tighten(process.env.PR_SIZE_LIMIT, MAX_LIMIT);
-export const TARGET = Math.min(tighten(process.env.PR_SIZE_TARGET, MAX_TARGET), LIMIT);
 
 export const EXCLUDE = [
   '**/package-lock.json', '**/pnpm-lock.yaml', '**/yarn.lock', '**/bun.lockb', '**/Cargo.lock',
@@ -136,9 +136,9 @@ function checkRange(base, head, label) {
     return 2;
   }
   const s = summarize(rows, mirrorCheck(head));
-  const verdict = s.total > LIMIT ? 'fail' : s.total > TARGET ? 'pass (over the target; consider splitting)' : 'pass';
+  const verdict = s.total > LIMIT ? 'fail' : 'pass';
   const where = label === 'HEAD' ? '' : ` [${label}]`;
-  console.log(`pr-size${where}: ${s.total} changed lines (+${s.added}/-${s.deleted}) in ${s.files} files; ${s.skipped.length} excluded. Limit ${LIMIT}, target ${TARGET}: ${verdict}`);
+  console.log(`pr-size${where}: ${s.total} changed lines (+${s.added}/-${s.deleted}) in ${s.files} files; ${s.skipped.length} excluded. Limit ${LIMIT}: ${verdict}`);
   if (s.binaries.length) console.log(`pr-size: binary files are not line-counted; justify them in the PR: ${s.binaries.map((b) => b.path).join(', ')}`);
   if (s.total <= LIMIT) return 0;
   const reason = exceptionReason(process.env);
@@ -146,7 +146,7 @@ function checkRange(base, head, label) {
     console.log(`pr-size: size exception accepted: ${reason}`);
     return 0;
   }
-  console.error('pr-size: split this into stacked PRs, or add the size-exception label and a "Size exception: <reason>" line.');
+  console.error('pr-size: split this into stacked PRs. Only a rare change the owner approved, such as a whole revamp, gets the size-exception label and a "Size exception: <reason>" line.');
   return 1;
 }
 
