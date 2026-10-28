@@ -43,8 +43,11 @@ no `--amend` on pushed commits, and no `--no-verify`. To update a branch, merge 
 *Enforced by:* agent deny rules, which are speed bumps with known gaps (see `docs/agents.md`). Nothing
 stops a force-push from a plain shell unless a `main` ruleset blocks force pushes.
 
-**R6. Writers do not review, and reviewers do not write.** The author never approves or merges
-its own PR. Review runs as a separate identity and a separate read-only session.
+**R6. Writers do not review, and reviewers do not write.** The agent that wrote a PR never
+reviews, approves or merges it. The reviewer is normally a model from another company: a PR by
+Claude goes to Codex or Grok, and a PR by Codex or Grok goes to Claude or the other one. A fresh
+session of the writing model is acceptable for testing the review flow, and the review says so.
+Review runs read-only, and its first line names the reviewing agent and model.
 *Enforced by:* honor. A ruleset requiring one approval from someone other than the last pusher
 would enforce it, but not while every agent pushes as the owner's account: GitHub sees one
 person. That needs a separate reviewer account or bot. See "Independent review identity":

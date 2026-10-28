@@ -19,7 +19,9 @@ have nobody to wait for.
 ## The practice
 
 - [R6](https://github.com/mogesjohnson/BEST-OF-AI-DEV/blob/main/template/RULES.md): writers don't review, and reviewers don't write. Review runs in
-  a separate, read-only session.
+  a separate, read-only session, normally on another company's model: a PR by Claude goes to
+  Codex or Grok, and theirs go to Claude. A fresh session of the writing model is a fallback for
+  testing the flow, not the default, and its review says so.
 - The PR template asks the author for evidence (commands and their results) and a review
   checklist, so the reviewer checks claims instead of rebuilding context.
 - [`CODEOWNERS`](https://github.com/mogesjohnson/BEST-OF-AI-DEV/blob/main/template/.github/CODEOWNERS) lists the sensitive paths, and its header
@@ -49,6 +51,7 @@ have nobody to wait for.
 
 - A second identity costs setup: a bot account or GitHub App, its token, and a ruleset. For a
   solo side project, a separate read-only session may be enough.
-- Two models can share a blind spot. A different vendor or a human catches more for risky
-  changes such as auth, payments and CI.
+- A fresh session of the same model shares the writer's training and habits, so it tends to miss
+  what the writer missed. That is why R6 asks for another vendor. Two vendors can still share a
+  blind spot, and a human catches more for risky changes such as auth, payments and CI.
 - Required reviews slow merges. Keep PRs small (see the small-PRs page) so the wait stays short.
