@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Moges Johnson's template and source of truth for AI-first development.",
   "engines": {
-    "node": ">=20"
+    "node": ">=22 <27"
   },
   "scripts": {
     "prepare": "node template/scripts/setup-hooks.mjs",
