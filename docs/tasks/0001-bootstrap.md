@@ -34,8 +34,8 @@ Out: the owner's other repos (read-only); the leaked Claude Code source mirrors 
 
 ## Constraints
 
-No downloaded executables (npm packages for the docs site are fine). Every PR stays under 600
-changed lines. Actions minutes are used up until 2026-11-01, so local checks are the gate.
+No downloaded executables (npm packages for the docs site are fine). Every PR stays at or under
+400 changed lines (600 before 2026-10-28). Actions minutes are used up until 2026-11-01, so local checks are the gate.
 
 ## Plan
 
@@ -46,5 +46,5 @@ changed lines. Actions minutes are used up until 2026-11-01, so local checks are
 
 ## Open questions
 
-- 400 or 600 lines as the hard limit? See ADR 0003.
+- ~~400 or 600 lines as the hard limit?~~ Answered 2026-10-28: 400, with no warning tier. See ADR 0003.
 - Keep zero-install hooks as the default? See ADR 0001.

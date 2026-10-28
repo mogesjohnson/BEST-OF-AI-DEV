@@ -43,7 +43,7 @@ test('hooks and size gate work in a fresh repo with a spaced path', () => {
     assert.equal(good.status, 0, good.stderr);
 
     g('switch', '-q', '-c', 'feat');
-    writeFileSync(join(dir, 'a.txt'), 'x\n'.repeat(700));
+    writeFileSync(join(dir, 'a.txt'), 'x\n'.repeat(401)); // one over the limit
     writeFileSync(join(dir, 'package-lock.json'), '{}\n'.repeat(5000));
     g('add', '-A');
     const big = g('commit', '-q', '-m', 'feat: add a big file');
@@ -51,7 +51,7 @@ test('hooks and size gate work in a fresh repo with a spaced path', () => {
     const size = (env) => run(dir, process.execPath, ['scripts/check/pr-size.mjs', '--base', 'main'], env);
     const over = size({ SIZE_EXCEPTION: '' });
     assert.equal(over.status, 1);
-    assert.match(over.stdout, /700 changed lines .* 1 excluded/);
+    assert.match(over.stdout, /401 changed lines .* 1 excluded/);
     assert.equal(size({ SIZE_EXCEPTION: 'test of the exception path' }).status, 0);
     // pre-push input names the branch being pushed; it is checked even when HEAD is elsewhere.
     const feat = g('rev-parse', 'feat').stdout.trim();
@@ -61,7 +61,7 @@ test('hooks and size gate work in a fresh repo with a spaced path', () => {
       input: `refs/heads/feat ${feat} refs/heads/feat ${'0'.repeat(40)}\n`,
     });
     assert.equal(pushed.status, 1, pushed.stdout);
-    assert.match(pushed.stdout, /\[feat\]: 700 changed lines/);
+    assert.match(pushed.stdout, /\[feat\]: 401 changed lines/);
     const first = run(dir, process.execPath, ['scripts/check/pr-size.mjs']);
     assert.equal(first.status, 2, 'no origin/main yet: blocked, not failed');
     assert.equal(first.stderr.trim().split('\n').length, 1, `one line, not a git stack: ${first.stderr}`);

@@ -18,7 +18,8 @@ Tracking: <!-- #123, a task spec path such as docs/tasks/0007-retry.md, or "none
 ## Size
 
 <!-- Paste the output line of `node scripts/check/pr-size.mjs`.
-     Over 600 lines needs the size-exception label and a "Size exception:" line here. -->
+     Over 400 lines fails. Split it. Only an exception the owner approved adds the
+     size-exception label and a "Size exception:" line here. -->
 
 ## Review checklist
 
