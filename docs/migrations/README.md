@@ -9,7 +9,7 @@ The reasons behind each step are in [practices/](../../practices) and the
 ## Steps every repo shares
 
 1. **Start a branch** off fresh `main`, for example `grok/adopt-template`. Keep each step below
-   in its own PR so none goes over the 600-line gate.
+   in its own PR so none goes over the 400-line gate.
 2. **Rules first.** Copy `AGENTS.md`, `RULES.md`, `CLAUDE.md` and `GEMINI.md` from
    [`template/`](../../template). Fill the `<!-- REPO-SPECIFIC -->` slots, and move any rules the
    repo already has into `AGENTS.md` or numbered rules from R20 up. `CLAUDE.md` and `GEMINI.md`

@@ -11,8 +11,8 @@ numbered PRs.
 **Why keep it:** small PRs are the only ones a reviewer can read in full. See
 [small PRs](../docs/why/01-small-prs.md).
 
-**In the template:** the budget is now a check, not prose. `scripts/check/pr-size.mjs` warns at
-400 changed lines and fails at 600, counting lines, never commits.
+**In the template:** the budget is now a check, not prose. `scripts/check/pr-size.mjs` fails
+above 400 changed lines, the same budget as that private repo, counting lines, never commits.
 
 ## 2. Commit-format hooks that live in the repo
 
