@@ -34,7 +34,7 @@ Run these from the repo root. They are the only definition of "checks pass".
 
 1. Every change starts from a task spec (`docs/tasks/`) or an issue with acceptance criteria.
 2. One task, one branch, one worktree: `<agent>/<short-topic>`, off fresh `main`.
-3. Small PRs. The size gate fails above 600 changed lines (lockfiles excluded); aim under 400.
+3. Small PRs. The size gate fails above 400 changed lines (lockfiles excluded). Split bigger work.
 4. Conventional Commits: lowercase `type(scope): subject`, at most 72 characters. The hook checks it.
    End each commit with `Refs: #N` (or the task file) and `Agent: <name>` trailers (unchecked).
 5. The PR template is the report. Fill every section; untick what you did not check.

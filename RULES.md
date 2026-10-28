@@ -60,12 +60,14 @@ fine; in a PR only `Revert "..."` is exempt, and Dependabot PRs skip the format 
 *Enforced by:* `.githooks/commit-msg` (skippable with `--no-verify`) and the `pr-checks` workflow,
 which blocks a merge only if a ruleset marks it required.
 
-**R8. PRs stay small.** At most 600 changed lines, lockfiles and generated files excluded;
-aim under 400. Commit count is never the measure. Bigger work becomes stacked PRs.
-An exception needs the `size-exception` label and a `Size exception:` line saying why.
-`SIZE_EXCEPTION=<reason>` gets a local push through but not CI; `PR_SIZE_LIMIT` can only lower the limit.
+**R8. PRs stay small.** At most 400 changed lines, lockfiles and generated files excluded.
+That is a hard limit with no warning tier, and commit count is never the measure. Bigger work becomes stacked PRs.
+Exceptions are rare and the owner's call, for something like a whole revamp: the owner adds the
+`size-exception` label, and the PR body gets a `Size exception:` line saying why. Agents never add it.
+`SIZE_EXCEPTION=<reason>` gets an approved local push through but not CI; `PR_SIZE_LIMIT` can only lower the limit.
 *Enforced by:* `scripts/check/pr-size.mjs` on pre-push and in `pr-checks`, which runs the base
 commit's copy so a PR cannot loosen its own gate. Advisory until a ruleset requires `pr-checks`.
+Who adds the label is honor while agents push as the owner's account.
 
 ## Evidence
 
