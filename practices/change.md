@@ -109,5 +109,5 @@ same. RULES.md R6 asks for review by someone other than the writer, and this rep
 break that rule. See
 [review identity](../docs/why/04-review-identity.md).
 
-**Instead:** use a ruleset that requires one approval from a code owner, plus a second agent
-or person as the reviewer. That ruleset isn't set up yet. It's the owner's decision.
+**Instead:** use a ruleset that requires one approval from a code owner, plus a reviewer on
+another company's model (R6) or a person. That ruleset isn't set up yet. It's the owner's decision.
