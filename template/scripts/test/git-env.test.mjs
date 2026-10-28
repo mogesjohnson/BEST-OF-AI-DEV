@@ -30,7 +30,8 @@ test('the hooks test leaves the repo named by GIT_DIR alone', () => {
     const env = { ...process.env, GIT_DIR: join(decoy, '.git'), GIT_INDEX_FILE: join(decoy, '.git', 'index') };
     delete env.NODE_TEST_CONTEXT; // otherwise the nested node --test does not run its tests
     const hooksTest = fileURLToPath(new URL('./hooks.test.mjs', import.meta.url));
-    const r = spawnSync(process.execPath, ['--test', hooksTest], { encoding: 'utf8', env });
+    // TAP, because Node 23+ prints the spec reporter even when stdout is not a terminal.
+    const r = spawnSync(process.execPath, ['--test', '--test-reporter=tap', hooksTest], { encoding: 'utf8', env });
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /# pass [1-9]/, 'the nested hooks tests did not run');
     assert.equal(git('config', 'user.name').stdout.trim(), 'owner', 'user.name was overwritten');

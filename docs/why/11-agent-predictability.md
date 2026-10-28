@@ -24,7 +24,7 @@ but not locally. Every one of those is a choice the agent makes again on each ru
   can then spot a missing section at a glance.
 - **Tools over choices.** The commit-msg hook, size gate and format checks reject a bad
   result outright, so the agent doesn't have to remember to avoid it.
-- **Pinned inputs.** Lockfiles, `node-version: 22`, and SHA-pinned actions keep yesterday's
+- **Pinned inputs.** Lockfiles, the two Node versions in `ci.yml` (R16), and SHA-pinned actions keep yesterday's
   passing run from failing today for reasons outside the change.
 
 ## Evidence

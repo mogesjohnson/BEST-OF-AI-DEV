@@ -114,6 +114,14 @@ The label asks for that review; it is not a bypass. Never merge red.
 path is enforced by `scripts/check/gate.mjs`, taken from the base commit: it applies only when
 the label, the line and a change to that checker's file are all present.
 
+## Toolchain
+
+**R16. Node versions are the ones CI tests.** `ci.yml` runs the tests on Node 22 on Linux, the
+oldest supported release, and on Node 26 on Windows, the newest. macOS runs only on demand, on
+Node 22. A version CI does not run is unsupported: never report it as tested. Change the versions
+in `ci.yml`, this rule and `package.json` `engines` together, in one PR.
+*Enforced by:* `ci.yml`, and `scripts/test/node-versions.test.mjs`, which fails when the three disagree.
+
 ## Repo-specific rules
 
 <!-- REPO-SPECIFIC: start at R20 so template rules can grow without renumbering yours.

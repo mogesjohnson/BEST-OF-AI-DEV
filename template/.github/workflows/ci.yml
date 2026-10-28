@@ -1,7 +1,10 @@
-# BEST-OF-AI-DEV template v1. Cheap CI: one Linux job, cancelled when superseded.
+# BEST-OF-AI-DEV template v1. Cheap CI: two short jobs, cancelled when superseded.
 # Do NOT make this workflow a required check: paths-ignore skips it for docs-only PRs,
 # and a skipped required workflow leaves the PR pending forever. Require pr-checks instead.
-# Other OSes run on demand (Actions > ci > Run workflow), not on every push.
+# Node versions (RULES.md R16): Linux runs the oldest supported Node and Windows the newest,
+# on every push. macOS runs the oldest, only on demand (Actions > ci > Run workflow > macos).
+# Public repos run standard runners free. Private repos pay per minute: Windows costs about
+# 1.7 times Linux and macOS about 10 times (docs/why/09-cost-and-ci-budget.md in BEST-OF-AI-DEV).
 name: ci
 
 on:
@@ -12,11 +15,10 @@ on:
     paths-ignore: ['**/*.md', 'docs/**', '.github/ISSUE_TEMPLATE/**']
   workflow_dispatch:
     inputs:
-      os:
-        description: Runner to test on
-        type: choice
-        options: [ubuntu-latest, windows-latest, macos-latest]
-        default: ubuntu-latest
+      macos:
+        description: Also test on macOS (oldest supported Node)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -25,10 +27,24 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # RULES.md R16. Change these, R16 and package.json "engines" in the same PR;
+  # scripts/test/node-versions.test.mjs fails when they disagree.
+  NODE_OLDEST: 22
+  NODE_NEWEST: 26
+
 jobs:
   verify:
-    runs-on: ${{ inputs.os || 'ubuntu-latest' }}
+    name: verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        exclude:
+          # macOS only when a manual run ticks the box.
+          - os: ${{ inputs.macos && 'none' || 'macos-latest' }}
     steps:
       # Actions are pinned to full commit SHAs; the comment names the release.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -36,7 +52,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version: ${{ matrix.os == 'windows-latest' && env.NODE_NEWEST || env.NODE_OLDEST }}
       # REPO-SPECIFIC: the same commands AGENTS.md lists. Keep this the only definition.
       # npm ci needs a lockfile. Without one, install anyway and warn: commit the lockfile.
       - name: Install

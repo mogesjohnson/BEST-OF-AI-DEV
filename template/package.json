@@ -1,6 +1,9 @@
 {
   "name": "your-repo",
   "private": true,
+  "engines": {
+    "node": ">=22 <27"
+  },
   "scripts": {
     "prepare": "node scripts/setup-hooks.mjs",
     "test": "node scripts/test/run.mjs"
