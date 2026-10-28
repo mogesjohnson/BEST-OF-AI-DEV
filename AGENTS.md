@@ -18,7 +18,7 @@ Run these from the repo root. They are the only definition of "checks pass".
 <!-- REPO-SPECIFIC: replace with the real commands. Delete any that do not exist. -->
 - Install hooks once per clone: `npm install` (sets `core.hooksPath`; no dependencies).
   pre-commit scans for secrets; pre-push runs `npm test` and the size gate.
-- Test scripts, hooks and template sync: `npm test` (Node 20+). PR size: `npm run check:size`
+- Test scripts, hooks and template sync: `npm test` (Node 22 to 26, R16). PR size: `npm run check:size`
 <!-- /REPO-SPECIFIC -->
 
 ## Where things live

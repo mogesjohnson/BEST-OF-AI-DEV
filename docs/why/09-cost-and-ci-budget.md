@@ -26,8 +26,10 @@ and money. It also teaches the agent to wait on CI rather than run the checks it
 - **Required checks must always run.** Only `pr-checks` should be required. A path-filtered
   workflow that's required leaves skipped PRs waiting forever, which is why `ci` and `site`
   say so in a comment.
-- **Standard runners only.** Hosted Windows and macOS builds are available on demand
-  (`workflow_dispatch` with an `os` input), not on every push.
+- **Two operating systems, two Node versions.** Every push runs Linux on Node 22, the oldest
+  supported release, and Windows on Node 26, the newest (RULES.md R16). macOS costs the most,
+  so it runs on Node 22 only on demand (`workflow_dispatch` with the `macos` box ticked).
+- **Standard runners only.** Larger runners cost money even on public repos.
 
 ## Evidence
 
@@ -39,6 +41,12 @@ and money. It also teaches the agent to wait on CI rather than run the checks it
 - In this repo, recent runs took 7 to 12 seconds for `pr-checks` and 9 to 17 seconds for `ci`.
   `site` took 27 to 45 seconds, and it ran only on the PRs that touched the site. Two `site`
   runs were cancelled when a newer push came in, as intended.
+- GitHub's runner price list, after the January 2026 cut: a standard Linux runner costs
+  $0.006 a minute, Windows $0.010 and macOS $0.062, so Windows is about 1.7 times Linux and
+  macOS about 10 times. Jobs bill by the started minute.
+  ([Actions runner pricing](https://docs.github.com/en/billing/reference/actions-runner-pricing))
+- Before the Windows job on Node 26 existed, a test that passed on Node 22 failed on Node 23
+  and later. CI never saw it; it blocked every local push on Node 26 instead.
 - While this repo was private, Actions runs were blocked on billing, and the local hooks were
   the only gate. Work continued because the checks did not live only in CI.
 
@@ -48,5 +56,8 @@ and money. It also teaches the agent to wait on CI rather than run the checks it
   affecting the site build, `site` won't run until someone updates the filter.
 - Cancelling runs means a PR's history shows cancelled runs. Look at the latest run, not
   the count.
+- On a private repo, the Windows job is most of the bill. With a test suite of a few seconds,
+  each push costs about one Linux minute plus one Windows minute. Move Windows to on demand
+  if minutes run short, and say so in R16.
 - Free minutes don't make the local machine free. The pre-push hook adds a few seconds to
   every push, and a slow test suite would cost the same time there.

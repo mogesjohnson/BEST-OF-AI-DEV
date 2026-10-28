@@ -29,7 +29,7 @@ template's copies with this repo's slots filled in.
 Start a new repo from `template/`, or move an existing one with the
 [shared migration steps](docs/migrations/README.md). Then fill the `REPO-SPECIFIC` slots.
 
-On Windows (PowerShell 5.1, Node 20.9 or newer, which the site also needs), check the hooks and checks from a fresh clone:
+On Windows (PowerShell 5.1 and Node 22 to 26; CI tests Windows on Node 26, see RULES.md R16), check the hooks and checks from a fresh clone:
 
 ```powershell
 gh repo clone mogesjohnson/BEST-OF-AI-DEV
