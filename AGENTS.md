@@ -38,7 +38,7 @@ Run these from the repo root. They are the only definition of "checks pass".
 4. Conventional Commits: lowercase `type(scope): subject`, at most 72 characters. The hook checks it.
    End each commit with `Refs: #N` (or the task file) and `Agent: <name>` trailers (unchecked).
 5. The PR template is the report. Fill every section; untick what you did not check.
-6. The author never reviews or merges their own PR. See RULES.md R6.
+6. The writing agent never reviews or merges its own PR; another company's model reviews (R6).
 7. Merge only when `gh pr checks <n> --watch --fail-fast` is green. See RULES.md R15.
 
 ## Done means
