@@ -50,7 +50,7 @@ npm run dev
 ```
 
 Open http://localhost:3000. See [`site/README.md`](site/README.md) for the build and for
-hosting under a subpath. The site isn't deployed yet.
+hosting under a subpath.
 
 ## Known gaps
 
@@ -61,8 +61,8 @@ hosting under a subpath. The site isn't deployed yet.
   review would fix this. That's the owner's call, and none is set up yet.
 - **Checks are advisory** until a ruleset marks `pr-checks` as required.
 - **Not run here:** gitleaks, lefthook and actionlint, a live agent session against the
-  configs, and the checker-change path (its `checker-change` and `size-exception` labels
-  don't exist yet).
+  configs, and the checker-change path. Its `checker-change` and `size-exception` labels
+  exist since 2026-10-28 but haven't been used yet.
 - [ADR 0004](docs/decisions/0004-commit-and-branch-names.md) on commit and branch names is
   still proposed.
 
