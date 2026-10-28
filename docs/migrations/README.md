@@ -16,7 +16,8 @@ The reasons behind each step are in [practices/](../../practices) and the
    stay as one-line `@AGENTS.md` imports.
 3. **Checks and hooks.** Copy `scripts/`, `.githooks/` and `.github/workflows/`. Add the
    `prepare` script from `template/package.json`. If the repo already has a `test` script, keep it
-   and run the template's tests from it too (`node scripts/test/run.mjs`).
+   and run the template's tests from it too (`node scripts/test/run.mjs`). Create the two labels
+   the gates read: `gh label create size-exception` (R8) and `gh label create checker-change` (R15).
 4. **Agent configs.** Copy `.claude/settings.json`, `.codex/config.toml` and `docs/agents.md`.
    Add the repo's own build and test commands to the allow list.
 5. **Pin actions.** Replace every `@v4`-style tag with a full commit SHA and a version comment,
